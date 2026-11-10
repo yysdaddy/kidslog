@@ -82,6 +82,12 @@ docker compose up -d --build
 
 > `JWT_SECRET` 未设置或短于 32 位时服务会直接拒绝启动，这是有意的设计。
 
+默认从 npmmirror 安装 npm 依赖（国内友好）。海外或 CI 环境可切换官方源：
+
+```bash
+docker compose build --build-arg NPM_REGISTRY=https://registry.npmjs.org
+```
+
 ## 本地开发
 
 需要 Node.js 22+（依赖内置 `node:sqlite`，启动时带 `--experimental-sqlite`，Node 22 会打印实验性警告，属正常）。
