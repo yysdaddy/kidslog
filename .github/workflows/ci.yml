@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  web:
+    name: 前端构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: 安装依赖
+        working-directory: web
+        run: npm ci --no-audit --no-fund
+
+      - name: 生产构建
+        working-directory: web
+        run: npm run build
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          retention-days: 7
+
+  server:
+    name: 后端检查与冒烟测试
+    runs-on: ubuntu-latest
+    env:
+      PORT: 18080
+      BASE: http://127.0.0.1:18080
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: 安装依赖
+        working-directory: server
+        run: npm ci --no-audit --no-fund
+
+      - name: 语法检查
+        run: |
+          for f in $(git ls-files 'server/src' | grep '\.js$'); do
+            node --check "$f"
+          done
+          echo "syntax ok"
+
+      - name: 缺少 JWT_SECRET 时必须拒绝启动
+        working-directory: server
+        env:
+          DATA_DIR: ${{ runner.temp }}/kl-data
+        run: |
+          set +e
+          env -u JWT_SECRET timeout 10 node --experimental-sqlite src/index.js
+          code=$?
+          set -e
+          echo "exit=$code"
+          if [ "$code" -ne 1 ]; then
+            echo "::error::未设置 JWT_SECRET 时退出码应为 1，实际为 $code"
+            exit 1
+          fi
+
+      - name: 启动并验证接口
+        working-directory: server
+        env:
+          JWT_SECRET: ci-secret-0123456789abcdef0123456789abcdef
+          DATA_DIR: ${{ runner.temp }}/kl-data
+          ALLOW_REGISTRATION: "true"
+          LOG_LEVEL: warn
+        run: |
+          mkdir -p "$DATA_DIR"
+          node --experimental-sqlite src/index.js > "$RUNNER_TEMP/server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/server.pid"
+
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -sf "$BASE/api/health" > /dev/null; then ok=1; break; fi
+            sleep 1
+          done
+          if [ "$ok" -ne 1 ]; then echo "::error::服务未在 30s 内就绪"; cat "$RUNNER_TEMP/server.log"; exit 1; fi
+
+          echo "health: $(curl -s "$BASE/api/health")"
+          echo "setup:  $(curl -s "$BASE/api/auth/setup")"
+
+          code=$(curl -s -o "$RUNNER_TEMP/reg.json" -w '%{http_code}' -X POST "$BASE/api/auth/register" \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"ci_admin","password":"CiPassw0rd!","displayName":"CI","familyName":"CI 家"}')
+          echo "register: $code $(cat "$RUNNER_TEMP/reg.json")"
+          [ "$code" = "200" ] || { echo "::error::首个注册应返回 200"; exit 1; }
+
+          # 登录 + 带 Cookie 访问受保护接口
+          code=$(curl -s -c "$RUNNER_TEMP/ck.txt" -o /dev/null -w '%{http_code}' -X POST "$BASE/api/auth/login" \
+            -H 'Content-Type: application/json' -d '{"username":"ci_admin","password":"CiPassw0rd!"}')
+          echo "login: $code"
+          [ "$code" = "200" ] || { echo "::error::登录失败"; exit 1; }
+
+          code=$(curl -s -b "$RUNNER_TEMP/ck.txt" -o /dev/null -w '%{http_code}' "$BASE/api/children")
+          echo "children(带登录态): $code"
+          [ "$code" = "200" ] || { echo "::error::鉴权接口异常"; exit 1; }
+
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/children")
+          echo "children(未登录): $code"
+          [ "$code" = "401" ] || { echo "::error::未登录访问应返回 401"; exit 1; }
+
+      - name: 关闭注册后第二个注册应被拒绝
+        working-directory: server
+        env:
+          JWT_SECRET: ci-secret-0123456789abcdef0123456789abcdef
+          DATA_DIR: ${{ runner.temp }}/kl-data
+          ALLOW_REGISTRATION: "false"
+          LOG_LEVEL: warn
+        run: |
+          kill "$(cat "$RUNNER_TEMP/server.pid")" 2>/dev/null || true
+          sleep 2
+          node --experimental-sqlite src/index.js > "$RUNNER_TEMP/server2.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/server.pid2"
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -sf "$BASE/api/health" > /dev/null; then ok=1; break; fi
+            sleep 1
+          done
+          [ "$ok" -eq 1 ] || { echo "::error::服务未就绪"; cat "$RUNNER_TEMP/server2.log"; exit 1; }
+
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/auth/register" \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"ci_other","password":"CiPassw0rd!"}')
+          echo "register(关闭后): $code"
+          [ "$code" = "403" ] || { echo "::error::关闭注册后应返回 403"; exit 1; }
+
+      - name: 失败时输出服务日志
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/server.log" 2>/dev/null | tail -50
+          cat "$RUNNER_TEMP/server2.log" 2>/dev/null | tail -50
+
+  docker:
+    name: 镜像构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 构建镜像（不推送）
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: kidslog:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 容器冒烟测试
+        run: |
+          docker run -d --name kl-ci -p 18080:8080 \
+            -e JWT_SECRET=ci-secret-0123456789abcdef0123456789abcdef \
+            kidslog:ci
+          ok=0
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:18080/api/health > /dev/null; then ok=1; break; fi
+            sleep 2
+          done
+          docker logs kl-ci | tail -20
+          docker rm -f kl-ci > /dev/null
+          [ "$ok" -eq 1 ] || { echo "::error::容器未就绪"; exit 1; }
+          echo "container ok"

@@ -1,5 +1,7 @@
 # KidsLog · 家庭成长记录
 
+![CI](https://github.com/yysdaddy/kidslog/actions/workflows/ci.yml/badge.svg)
+
 自托管的家庭育儿记录系统。给家里的小宝宝记喂养、睡眠、身高体重、就医用药和日常出行，
 照片视频一起留档，多设备多家人共用同一份账本。
 
