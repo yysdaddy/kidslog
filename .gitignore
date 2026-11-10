@@ -1,0 +1,36 @@
+# 依赖
+node_modules/
+.pnp/
+.pnp.js
+
+# 构建产物
+dist/
+build/
+*.tsbuildinfo
+
+# 运行时数据（SQLite 数据库与媒体文件）
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+
+# 环境变量与密钥
+.env
+.env.*
+!.env.example
+
+# 临时目录与测试产物
+temp/
+tempdata*/
+coverage/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# 编辑器与系统文件
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

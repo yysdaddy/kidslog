@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7CC4F5"/>
+      <stop offset="1" stop-color="#4A8FD8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <!-- 心形 -->
+  <path d="M256 400c-8 0-16-3-22-9-46-42-118-96-118-166 0-44 34-79 78-79 26 0 47 13 62 33 15-20 36-33 62-33 44 0 78 35 78 79 0 70-72 124-118 166-6 6-14 9-22 9z"
+        fill="#FFFFFF" opacity="0.96"/>
+  <!-- 小心点 -->
+  <circle cx="196" cy="196" r="18" fill="#FFD166"/>
+  <circle cx="316" cy="196" r="12" fill="#9BE7C4"/>
+</svg>

@@ -1,0 +1,31 @@
+services:
+  kidslog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kidslog:0.6.3
+    container_name: kidslog
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Asia/Shanghai
+      - NODE_ENV=production
+      - DATA_DIR=/data
+      - PORT=8080
+      - JWT_SECRET=${JWT_SECRET:?请先在 .env 中设置 JWT_SECRET，可用 openssl rand -hex 32 生成}
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
+      - MEDIA_QUOTA_GB=20
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
