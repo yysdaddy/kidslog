@@ -1,15 +1,52 @@
 import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 
-// 安全要求：JWT_SECRET 必须显式提供，禁止内置默认值（否则任何人都能伪造登录态）
-const SECRET = process.env.JWT_SECRET
-if (!SECRET || SECRET.length < 32) {
-  console.error(
-    '[fatal] 环境变量 JWT_SECRET 未设置或长度不足 32 位。\n' +
-      '  生成方式：openssl rand -hex 32\n' +
-      '  然后写入项目根目录的 .env 文件（或容器环境变量）后重启。',
-  )
-  process.exit(1)
+// 安全要求：不内置硬编码默认密钥（否则任何人都能伪造登录态）。
+// 密钥来源优先级：
+//   1) 环境变量 JWT_SECRET（显式提供，长度需 ≥ 32）
+//   2) DATA_DIR/.jwt_secret —— 首次启动时自动生成随机密钥并持久化到数据卷，
+//      重启后复用同一密钥。适用于「不想配置 .env」的一键部署场景。
+function resolveSecret() {
+  const fromEnv = process.env.JWT_SECRET
+  if (fromEnv && fromEnv.trim()) {
+    const s = fromEnv.trim()
+    if (s.length < 32) {
+      console.error(
+        '[fatal] 环境变量 JWT_SECRET 长度不足 32 位。\n' +
+          '  生成方式：openssl rand -hex 32\n' +
+          '  或留空，由服务在数据目录自动生成（docker-compose.noenv.yml）。',
+      )
+      process.exit(1)
+    }
+    return s
+  }
+
+  const dataDir = process.env.DATA_DIR || '/data'
+  const keyFile = path.join(dataDir, '.jwt_secret')
+  try {
+    if (fs.existsSync(keyFile)) {
+      const saved = fs.readFileSync(keyFile, 'utf8').trim()
+      if (saved.length >= 32) return saved
+    }
+    fs.mkdirSync(dataDir, { recursive: true })
+    const generated = crypto.randomBytes(32).toString('hex')
+    fs.writeFileSync(keyFile, `${generated}\n`, { mode: 0o600 })
+    console.warn(
+      `[warn] 未设置 JWT_SECRET，已自动生成随机密钥并保存到 ${keyFile}（重启沿用，删除该文件会导致所有人登录态失效）。`,
+    )
+    return generated
+  } catch (err) {
+    console.error(
+      '[fatal] 未设置 JWT_SECRET，且无法在数据目录自动生成密钥：' +
+        `${err?.message || err}\n` +
+        '  请显式设置环境变量 JWT_SECRET（openssl rand -hex 32），或确认数据目录可写。',
+    )
+    process.exit(1)
+  }
 }
+
+const SECRET = resolveSecret()
 const TTL_DAYS = 7
 
 export function hashPassword(pw) {

@@ -1,0 +1,39 @@
+# 零配置版本：不需要 .env、不需要手动设置 JWT_SECRET。
+#
+# 用法（与 docker-compose.yml 二选一）：
+#   docker compose -f docker-compose.noenv.yml up -d
+#
+# JWT 密钥在首次启动时由服务自动生成，保存在数据目录 `./data/.jwt_secret`，
+# 重启沿用；删除该文件会让所有人登录态失效，请勿随意删除。
+# 所有可选项均已给出默认值，想改动时取消注释对应行即可（也可另建 .env 覆盖）。
+services:
+  kidslog:
+    # 需 0.6.6 及以上版本才支持免配置自动生成密钥
+    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.6}
+    container_name: kidslog
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Asia/Shanghai
+      NODE_ENV: production
+      DATA_DIR: /data
+      PORT: "8080"
+      # 公网部署建议改为 "false"，家人通过邀请码加入
+      ALLOW_REGISTRATION: "true"
+      MEDIA_QUOTA_GB: "20"
+      # 如需自备份恢复或迁移旧实例，可显式指定同一密钥（留空则自动生成）
+      # JWT_SECRET: ""
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

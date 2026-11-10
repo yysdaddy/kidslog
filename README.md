@@ -47,6 +47,7 @@
 ```
 .
 ├─ docker-compose.yml     # 一键部署（默认拉取预构建镜像）
+├─ docker-compose.noenv.yml # 零配置部署：不需要 .env，密钥自动生成
 ├─ docker-compose.build.yml # 可选：从源码本地构建的 override
 ├─ Dockerfile             # 多阶段：前端构建 → 运行时（含 ffmpeg）
 ├─ .env.example           # 环境变量模板
@@ -75,15 +76,27 @@ cd kidslog
 cp .env.example .env
 # 填入必填的 JWT 密钥
 openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
-docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.5
+docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.6
 ```
+
+### 零配置启动（不需要 .env）
+
+```bash
+docker compose -f docker-compose.noenv.yml up -d
+```
+
+`docker-compose.noenv.yml` 里所有参数都写了默认值，**不依赖 `.env`，也不需要手动设置 `JWT_SECRET`**：
+首次启动时服务会自动生成随机密钥并写入 `./data/.jwt_secret`（权限 600），之后重启沿用同一密钥。
+注意该文件是登录态的唯一凭证，删除会让所有人退出登录；迁移实例时记得连 `data` 目录一起搬。
+
+想改端口、关掉自助注册等，取消该文件里的注释行即可，或在旁边放一个 `.env` 覆盖（同名变量优先）。
 
 `docker-compose.yml` 默认**不含 `build:` 段**，直接使用 Docker Hub 上的预构建镜像，
 启动时不再编译，秒级起服。想换版本或换源，在 `.env` 里设置即可：
 
 ```bash
 KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
-# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.5（私有仓库需先 docker login ghcr.io）
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.6（私有仓库需先 docker login ghcr.io）
 ```
 
 需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
