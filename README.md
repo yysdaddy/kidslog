@@ -77,6 +77,17 @@ openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
 docker compose up -d --build
 ```
 
+不想在本地构建，也可以直接拉取 CI 预构建的镜像（GitHub Container Registry）：
+
+```bash
+docker pull ghcr.io/yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
+```
+
+然后把 `docker-compose.yml` 里的 `build:` 段删掉、`image:` 改成 `ghcr.io/yysdaddy/kidslog:latest`
+（或用 `sed` 一行替换），再 `docker compose up -d` 即可，镜像构建时间归零。
+
+> 镜像由 tag 推送自动触发构建：打 `v*` 标签即会产出对应版本号与 `latest` 两个标签。
+
 打开 `http://<服务器地址>:8080`。首次访问会引导创建管理员账号（第一个注册者自动成为管理员），
 随后可在「我的 → 家庭」里拿到邀请码，让其他家人加入。
 
