@@ -9,7 +9,7 @@
 services:
   kidslog:
     # 需 0.6.6 及以上版本才支持免配置自动生成密钥
-    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.6}
+    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.7}
     container_name: kidslog
     restart: unless-stopped
     ports:

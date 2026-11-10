@@ -76,7 +76,7 @@ cd kidslog
 cp .env.example .env
 # 填入必填的 JWT 密钥
 openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
-docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.6
+docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.7
 ```
 
 ### 零配置启动（不需要 .env）
@@ -95,8 +95,8 @@ docker compose -f docker-compose.noenv.yml up -d
 启动时不再编译，秒级起服。想换版本或换源，在 `.env` 里设置即可：
 
 ```bash
-KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
-# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.6（私有仓库需先 docker login ghcr.io）
+KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.7
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.7（私有仓库需先 docker login ghcr.io）
 ```
 
 需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
