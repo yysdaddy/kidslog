@@ -1,9 +1,9 @@
 services:
   kidslog:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: kidslog:0.6.5          # 也可直接用预构建镜像：ghcr.io/yysdaddy/kidslog:0.6.5
+    # 默认直接拉取预构建镜像，不本地构建。
+    # 可用 .env 覆盖：KIDSLOG_IMAGE=yysdaddy/kidslog:latest
+    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.5}
+    # 需要从源码本地构建时，见 docker-compose.build.yml
     container_name: kidslog
     restart: unless-stopped
     ports:

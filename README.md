@@ -46,7 +46,8 @@
 
 ```
 .
-├─ docker-compose.yml     # 一键部署
+├─ docker-compose.yml     # 一键部署（默认拉取预构建镜像）
+├─ docker-compose.build.yml # 可选：从源码本地构建的 override
 ├─ Dockerfile             # 多阶段：前端构建 → 运行时（含 ffmpeg）
 ├─ .env.example           # 环境变量模板
 ├─ server/
@@ -74,17 +75,22 @@ cd kidslog
 cp .env.example .env
 # 填入必填的 JWT 密钥
 openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
-docker compose up -d --build
+docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.5
 ```
 
-不想在本地构建，也可以直接拉取 CI 预构建的镜像（GitHub Container Registry）：
+`docker-compose.yml` 默认**不含 `build:` 段**，直接使用 Docker Hub 上的预构建镜像，
+启动时不再编译，秒级起服。想换版本或换源，在 `.env` 里设置即可：
 
 ```bash
-docker pull ghcr.io/yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
+KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.5（私有仓库需先 docker login ghcr.io）
 ```
 
-然后把 `docker-compose.yml` 里的 `build:` 段删掉、`image:` 改成 `ghcr.io/yysdaddy/kidslog:latest`
-（或用 `sed` 一行替换），再 `docker compose up -d` 即可，镜像构建时间归零。
+需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
 
 > 镜像由 tag 推送自动触发构建：打 `v*` 标签即会产出对应版本号与 `latest` 两个标签。
 
@@ -93,10 +99,11 @@ docker pull ghcr.io/yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.5
 
 > `JWT_SECRET` 未设置或短于 32 位时服务会直接拒绝启动，这是有意的设计。
 
-默认从 npmmirror 安装 npm 依赖（国内友好）。海外或 CI 环境可切换官方源：
+本地构建时默认从 npmmirror 安装 npm 依赖（国内友好）。海外或 CI 环境可切换官方源：
 
 ```bash
-docker compose build --build-arg NPM_REGISTRY=https://registry.npmjs.org
+NPM_REGISTRY=https://registry.npmjs.org \
+  docker compose -f docker-compose.yml -f docker-compose.build.yml build
 ```
 
 ## 本地开发

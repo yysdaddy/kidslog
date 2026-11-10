@@ -1,0 +1,17 @@
+# 源码本地构建的 override 文件，不参与默认 ``docker compose up``。
+#
+# 用法：
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+# 需要换 npm 源时（海外或 CI）附加构建参数：
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml build \
+#     --build-arg NPM_REGISTRY=https://registry.npmjs.org
+services:
+  kidslog:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    # 本地构建产物统一打这个标签，避免与远端同名镜像混淆
+    image: ${KIDSLOG_LOCAL_IMAGE:-kidslog:local}
