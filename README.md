@@ -29,7 +29,7 @@
 - 孩子档案（生日、性别、头像），多孩切换
 - 家庭协作：邀请码加入，成员角色与权限区分
 - 今日时间轴 + 日历视图（按月打点）
-- 相册：记录内上传图片/视频，服务端统一转码为 JPEG 与 720p MP4，九宫格 + 全屏预览
+- 媒体附件：记录内可上传图片/视频，服务端统一转码为 JPEG 与 720p MP4，随记录详情预览
 - 统计：喂养/睡眠频次、生长发育曲线、健康概览
 - 疫苗计划参考（按月龄提示）
 - 管理员后台：成员管理、重置密码、账号停用、存储配额与自动清理
@@ -61,7 +61,7 @@
 │  └─ src/
 │     ├─ App.tsx          # 路由与导航
 │     ├─ recordTypes.tsx  # 记录类型与表单字段定义
-│     ├─ pages/           # Home / Calendar / Gallery / Growth / Health / Me / Admin / Login
+│     ├─ pages/           # Home / Calendar / Growth / Health / Me / Admin / Login
 │     └─ components/      # RecordSheet / RecordDetail / Timeline / Lightbox / MediaPicker / StatsView ...
 └─ tests/                 # 接口与端到端测试脚本（bash / python）
 ```
