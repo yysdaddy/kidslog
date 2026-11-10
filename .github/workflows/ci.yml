@@ -25,7 +25,11 @@ jobs:
           # lock 中的 resolved 指向 npmmirror，海外 runner 访问不稳定，CI 切官方源
           npm config set registry https://registry.npmjs.org
           sed -i 's#https://registry.npmmirror.com#https://registry.npmjs.org#g' package-lock.json
-          npm ci --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000
+          if ! npm ci --no-audit --no-fund --fetch-retries=5 --fetch-timeout=300000; then
+            echo "::warning::npm ci 失败，回退到 npm install"
+            { echo '### npm ci 失败日志'; tail -60 ~/.npm/_logs/*.log 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY" || true
+            npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=300000
+          fi
 
       - name: 生产构建
         working-directory: web
@@ -55,7 +59,14 @@ jobs:
 
       - name: 安装依赖
         working-directory: server
-        run: npm ci --no-audit --no-fund
+        run: |
+          npm config set registry https://registry.npmjs.org
+          sed -i 's#https://registry.npmmirror.com#https://registry.npmjs.org#g' package-lock.json
+          if ! npm ci --no-audit --no-fund --fetch-retries=5 --fetch-timeout=300000; then
+            echo "::warning::npm ci 失败，回退到 npm install"
+            { echo '### npm ci 失败日志'; tail -60 ~/.npm/_logs/*.log 2>/dev/null; } >> "$GITHUB_STEP_SUMMARY" || true
+            npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=300000
+          fi
 
       - name: 语法检查
         run: |
