@@ -11,7 +11,9 @@ on:
         default: latest
 
 env:
-  IMAGE: ghcr.io/${{ github.repository }}
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  DOCKERHUB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/kidslog
+  ACR_IMAGE: ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/kidslog
 
 jobs:
   image:
@@ -20,6 +22,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+      HAS_ACR: ${{ secrets.ALIYUN_REGISTRY != '' && secrets.ALIYUN_USERNAME != '' && secrets.ALIYUN_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,6 +37,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 登录 Docker Hub
+        if: env.HAS_DOCKERHUB == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 登录阿里云 ACR
+        if: env.HAS_ACR == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ALIYUN_REGISTRY }}
+          username: ${{ secrets.ALIYUN_USERNAME }}
+          password: ${{ secrets.ALIYUN_PASSWORD }}
+
       - name: 计算镜像标签
         id: meta
         run: |
@@ -42,7 +62,36 @@ jobs:
           fi
           v="${v:-latest}"
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "镜像标签: $v"
+
+          TAGS="${GHCR_IMAGE}:${v}
+          ${GHCR_IMAGE}:latest"
+
+          if [ "$HAS_DOCKERHUB" = "true" ]; then
+            TAGS="${TAGS}
+          ${DOCKERHUB_IMAGE}:${v}
+          ${DOCKERHUB_IMAGE}:latest"
+            echo "Docker Hub: 启用"
+          else
+            echo "Docker Hub: 未配置 secrets，跳过"
+          fi
+
+          if [ "$HAS_ACR" = "true" ]; then
+            TAGS="${TAGS}
+          ${ACR_IMAGE}:${v}
+          ${ACR_IMAGE}:latest"
+            echo "阿里云 ACR: 启用"
+          else
+            echo "阿里云 ACR: 未配置 secrets，跳过"
+          fi
+
+          {
+            echo "tags<<EOF"
+            echo "$TAGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "本次推送目标："
+          echo "$TAGS"
 
       - name: 构建并推送
         uses: docker/build-push-action@v6
@@ -52,9 +101,7 @@ jobs:
           platforms: linux/amd64
           build-args: |
             NPM_REGISTRY=https://registry.npmjs.org
-          tags: |
-            ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
-            ${{ env.IMAGE }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.version=${{ steps.meta.outputs.version }}
@@ -65,11 +112,19 @@ jobs:
 
       - name: 输出拉取地址
         run: |
+          v="${{ steps.meta.outputs.version }}"
           {
             echo "### 镜像已发布"
+            echo ''
             echo '```'
-            echo "docker pull ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}"
-            echo "docker pull ${{ env.IMAGE }}:latest"
+            echo "docker pull ${GHCR_IMAGE}:${v}"
+            if [ "$HAS_DOCKERHUB" = "true" ]; then
+              echo "docker pull ${DOCKERHUB_IMAGE}:${v}"
+            fi
+            if [ "$HAS_ACR" = "true" ]; then
+              echo "docker pull ${ACR_IMAGE}:${v}"
+            fi
             echo '```'
-            echo "若需匿名拉取，请在包设置中把可见性改为 public：https://github.com/users/${{ github.repository_owner }}/packages/container/kidslog/settings"
+            echo ''
+            echo "GHCR 匿名拉取需在包设置中改为 public：https://github.com/users/${{ github.repository_owner }}/packages/container/kidslog/settings"
           } >> "$GITHUB_STEP_SUMMARY"
