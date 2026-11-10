@@ -1,5 +1,5 @@
 # ---------- 前端构建 ----------
-FROM node:22-slim AS web-build
+FROM node:26-slim AS web-build
 # 国内可用 npmmirror（默认），CI 或海外环境可 --build-arg NPM_REGISTRY=https://registry.npmjs.org
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 WORKDIR /app/web
@@ -10,7 +10,7 @@ COPY web/ ./
 RUN npm run build
 
 # ---------- 运行时 ----------
-FROM node:22-slim AS runtime
+FROM node:26-slim AS runtime
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 WORKDIR /app
 ENV NODE_ENV=production
