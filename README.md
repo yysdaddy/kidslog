@@ -96,7 +96,7 @@ docker compose -f docker-compose.noenv.yml up -d
 
 ```bash
 KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.7
-# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.7（私有仓库需先 docker login ghcr.io）
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.7（公开包，无需登录即可拉取）
 ```
 
 需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
