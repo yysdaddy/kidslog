@@ -31,6 +31,10 @@ jobs:
             npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=300000
           fi
 
+      - name: 类型检查
+        working-directory: web
+        run: npx tsc --noEmit
+
       - name: 生产构建
         working-directory: web
         run: npm run build
@@ -191,11 +195,47 @@ jobs:
           echo "register(关闭后): $code"
           [ "$code" = "403" ] || { echo "::error::关闭注册后应返回 403"; exit 1; }
 
+      - name: 登录限流生效（超阈值返回 429）
+        working-directory: server
+        env:
+          JWT_SECRET: ci-secret-0123456789abcdef0123456789abcdef
+          DATA_DIR: ${{ runner.temp }}/kl-data
+          RATE_LIMIT_LOGIN: "3"
+          LOG_LEVEL: warn
+        run: |
+          kill "$(cat "$RUNNER_TEMP/server.pid2")" 2>/dev/null || true
+          sleep 2
+          node --experimental-sqlite src/index.js > "$RUNNER_TEMP/server3.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/server.pid3"
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -sf "$BASE/api/health" > /dev/null; then ok=1; break; fi
+            sleep 1
+          done
+          [ "$ok" -eq 1 ] || { echo "::error::服务未就绪"; cat "$RUNNER_TEMP/server3.log"; exit 1; }
+
+          last=""
+          for i in 1 2 3 4; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/auth/login" \
+              -H 'Content-Type: application/json' -d '{"username":"ci_admin","password":"wrong-pw"}')
+            echo "login#$i: $code"
+            last="$code"
+          done
+          [ "$last" = "429" ] || { echo "::error::超出登录限流阈值后应返回 429，实际为 $last"; exit 1; }
+
+          # 不同 IP（X-Forwarded-For）应独立计数，避免反代场景下全站共用一个桶
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/auth/login" \
+            -H 'X-Forwarded-For: 203.0.113.9' \
+            -H 'Content-Type: application/json' -d '{"username":"ci_admin","password":"wrong-pw"}')
+          echo "login(另一 IP): $code"
+          [ "$code" = "401" ] || { echo "::error::不同客户端 IP 应独立计数，实际为 $code"; exit 1; }
+
       - name: 失败时输出服务日志
         if: failure()
         run: |
           cat "$RUNNER_TEMP/server.log" 2>/dev/null | tail -50
           cat "$RUNNER_TEMP/server2.log" 2>/dev/null | tail -50
+          cat "$RUNNER_TEMP/server3.log" 2>/dev/null | tail -50
 
   docker:
     name: 镜像构建

@@ -33,11 +33,11 @@ export default async function accountRoutes(app) {
 
     const u = currentUser(req.user.uid)
     if (!u) return reply.code(401).send({ error: '未登录' })
-    if (!verifyPassword(String(oldPassword), u.password_hash)) {
+    if (!(await verifyPassword(String(oldPassword), u.password_hash))) {
       return reply.code(400).send({ error: '原密码不正确' })
     }
     db.prepare(`UPDATE users SET password_hash = ?, must_change_pw = 0, token_version = token_version + 1
-                WHERE id = ?`).run(hashPassword(String(newPassword)), u.id)
+                WHERE id = ?`).run(await hashPassword(String(newPassword)), u.id)
     const fresh = currentUser(u.id)
     reply.setCookie(
       COOKIE_NAME,

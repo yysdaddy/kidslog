@@ -100,7 +100,9 @@ export default async function recordRoutes(app) {
     if (type) { sql += ' AND r.type = ?'; args.push(type) }
 
     sql += ' ORDER BY r.occurred_at DESC LIMIT ?'
-    args.push(Number(limit) || 200)
+    // 限制单次返回条数上限，避免历史数据堆积后一次拉出整张表
+    const n = Number(limit)
+    args.push(Number.isFinite(n) && n > 0 ? Math.min(Math.floor(n), 500) : 200)
 
     const rows = db.prepare(sql).all(...args)
     return { records: withAttachments(rows.map(rowToRecord)) }

@@ -22,6 +22,8 @@ data/
 
 # 临时目录与测试产物
 temp/
+__pycache__/
+*.py[cod]
 tempdata*/
 coverage/
 *.log

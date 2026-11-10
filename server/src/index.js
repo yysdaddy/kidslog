@@ -19,7 +19,17 @@ import adminRoutes from './routes/admin.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
 
-const app = Fastify({ logger: { level: process.env.LOG_LEVEL || 'info' }, bodyLimit: 1024 * 1024 })
+// trustProxy：部署在 Nginx / Caddy / Cloudflare Tunnel 之后时，req.ip 才能取到真实客户端地址，
+// 登录限流才不会退化成「全站共用一个 IP 桶」。
+//   - 默认信任 X-Forwarded-For（反代场景，反代会覆写该头）；
+//   - 若服务直接暴露在公网、前面没有反代，请设 TRUST_PROXY=false，
+//     否则客户端可伪造 X-Forwarded-For 为每个请求换「IP」绕过限流。
+const trustProxy = process.env.TRUST_PROXY === 'false' ? false : true
+const app = Fastify({
+  logger: { level: process.env.LOG_LEVEL || 'info' },
+  bodyLimit: 1024 * 1024,
+  trustProxy,
+})
 
 await app.register(cookie)
 await app.register(multipart, { limits: { fileSize: 200 * 1024 * 1024, files: 1 } })

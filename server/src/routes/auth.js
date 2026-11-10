@@ -1,5 +1,6 @@
 import { db, now, uid } from '../db.js'
 import { hashPassword, verifyPassword, signToken, verifyToken, makeInviteCode, COOKIE_NAME, cookieOptions } from '../auth.js'
+import { limitLogin, limitRegister, limitJoin } from '../rateLimit.js'
 
 export function fullUser(userId) {
   const u = db.prepare(`SELECT u.id, u.username, u.display_name AS displayName, u.family_id AS familyId,
@@ -28,7 +29,7 @@ export default async function authRoutes(app) {
   })
 
   // 注册：创建家庭 + owner 账号；系统内尚无管理员时，第一个注册者成为管理员
-  app.post('/api/auth/register', async (req, reply) => {
+  app.post('/api/auth/register', { preHandler: limitRegister }, async (req, reply) => {
     const { username, password, displayName, familyName } = req.body || {}
     if (!username || !password) return reply.code(400).send({ error: '用户名和密码必填' })
     if (String(password).length < 6) return reply.code(400).send({ error: '密码至少 6 位' })
@@ -51,7 +52,7 @@ export default async function authRoutes(app) {
       .run(familyId, familyName || `${displayName || username}的家`, makeInviteCode(), ts)
     db.prepare(`INSERT INTO users (id, family_id, username, password_hash, display_name, role, is_admin, created_at)
                 VALUES (?, ?, ?, ?, ?, 'owner', ?, ?)`)
-      .run(userId, familyId, username, hashPassword(password), displayName || username, isFirstAdmin ? 1 : 0, ts)
+      .run(userId, familyId, username, await hashPassword(password), displayName || username, isFirstAdmin ? 1 : 0, ts)
 
     const created = db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
     issueToken(reply, created)
@@ -59,7 +60,7 @@ export default async function authRoutes(app) {
   })
 
   // 加入家庭
-  app.post('/api/auth/join', async (req, reply) => {
+  app.post('/api/auth/join', { preHandler: limitJoin }, async (req, reply) => {
     const { username, password, displayName, inviteCode } = req.body || {}
     if (!username || !password || !inviteCode) return reply.code(400).send({ error: '信息不完整' })
     const fam = db.prepare('SELECT * FROM families WHERE invite_code = ?').get(String(inviteCode).toUpperCase())
@@ -70,17 +71,17 @@ export default async function authRoutes(app) {
     const userId = uid('usr_')
     db.prepare(`INSERT INTO users (id, family_id, username, password_hash, display_name, role, created_at)
                 VALUES (?, ?, ?, ?, ?, 'member', ?)`)
-      .run(userId, fam.id, username, hashPassword(password), displayName || username, now())
+      .run(userId, fam.id, username, await hashPassword(password), displayName || username, now())
     const created = db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
     issueToken(reply, created)
     return { ok: true, user: fullUser(userId) }
   })
 
   // 登录
-  app.post('/api/auth/login', async (req, reply) => {
+  app.post('/api/auth/login', { preHandler: limitLogin }, async (req, reply) => {
     const { username, password } = req.body || {}
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
-    if (!user || !verifyPassword(password, user.password_hash)) {
+    if (!user || !(await verifyPassword(password, user.password_hash))) {
       return reply.code(401).send({ error: '用户名或密码错误' })
     }
     if ((user.status || 'active') !== 'active') {

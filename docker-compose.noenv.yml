@@ -24,6 +24,12 @@ services:
       # 公网部署建议改为 "false"，家人通过邀请码加入
       ALLOW_REGISTRATION: "true"
       MEDIA_QUOTA_GB: "20"
+      # 登录/注册/邀请码加入的每 IP 每分钟上限（0 关闭对应限流）
+      RATE_LIMIT_LOGIN: "10"
+      RATE_LIMIT_REGISTER: "5"
+      RATE_LIMIT_JOIN: "10"
+      # 容器端口直接暴露公网、前面没有反代时改为 "false"
+      TRUST_PROXY: "true"
       # 如需自备份恢复或迁移旧实例，可显式指定同一密钥（留空则自动生成）
       # JWT_SECRET: ""
     healthcheck:

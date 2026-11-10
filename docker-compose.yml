@@ -18,6 +18,12 @@ services:
       - JWT_SECRET=${JWT_SECRET:?请先在 .env 中设置 JWT_SECRET，可用 openssl rand -hex 32 生成}
       - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
       - MEDIA_QUOTA_GB=20
+      # 登录/注册/邀请码加入的每 IP 每分钟请求上限（0 关闭对应限流）
+      - RATE_LIMIT_LOGIN=${RATE_LIMIT_LOGIN:-10}
+      - RATE_LIMIT_REGISTER=${RATE_LIMIT_REGISTER:-5}
+      - RATE_LIMIT_JOIN=${RATE_LIMIT_JOIN:-10}
+      # 容器端口直接暴露公网、前面没有反代时设为 false（否则可伪造 X-Forwarded-For 绕过限流）
+      - TRUST_PROXY=${TRUST_PROXY:-true}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

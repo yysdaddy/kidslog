@@ -110,7 +110,9 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 打开 `http://<服务器地址>:8080`。首次访问会引导创建管理员账号（第一个注册者自动成为管理员），
 随后可在「我的 → 家庭」里拿到邀请码，让其他家人加入。
 
-> `JWT_SECRET` 未设置或短于 32 位时服务会直接拒绝启动，这是有意的设计。
+> 关于 `JWT_SECRET`：**未设置**时服务会自动生成 32 字节随机密钥并写入 `DATA_DIR/.jwt_secret`（权限 600），
+> 重启后沿用，无需手填；**设置了但短于 32 位**时才会拒绝启动（避免弱密钥可被离线暴力破解）。
+> 删除 `data/.jwt_secret` 会让所有人的登录态失效，备份时请一并保留。
 
 本地构建时默认从 npmmirror 安装 npm 依赖（国内友好）。海外或 CI 环境可切换官方源：
 
@@ -137,16 +139,29 @@ npm run dev
 
 生产构建：`cd web && npm run build`，产物输出到 `web/dist`，运行时由后端作为静态目录托管。
 
+## 安全默认值
+
+- **登录限流已内置**：`/api/auth/login` 每 IP 每分钟 10 次、`/api/auth/register` 5 次、`/api/auth/join` 10 次，
+  超限返回 `429` 并带 `Retry-After`。阈值可用 `RATE_LIMIT_*` 调整，单进程内存计数（单实例部署适用）。
+- **密码哈希为异步 scrypt**（N=16384/r=8/p=1），不会阻塞事件循环。
+- **邀请码 10 位 base32（约 50 bit 熵）**，家庭页可随时重置；旧版 8 位邀请码仍可加入。
+- 部署在反代之后时请保持 `TRUST_PROXY` 开启（默认），让限流按真实客户端 IP 计数；
+  容器端口直接暴露公网时改为 `false`。
+
 ## 环境变量
 
 | 变量 | 必填 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `JWT_SECRET` | 是 | 无 | 登录令牌签名密钥，≥ 32 位随机串 |
+| `JWT_SECRET` | 否 | 自动生成 | 登录令牌签名密钥，≥ 32 位随机串；未设置时自动生成到 `DATA_DIR/.jwt_secret`（0600），设置但过短会拒绝启动 |
 | `DATA_DIR` | 否 | `/data` | 数据库、媒体、备份的存放目录 |
 | `PORT` | 否 | `8080` | 服务端口 |
 | `ALLOW_REGISTRATION` | 否 | `true` | 设为 `false` 关闭自助注册（首个管理员不受限，其余走邀请码） |
 | `MEDIA_QUOTA_GB` | 否 | `20` | 媒体存储配额 |
 | `LOG_LEVEL` | 否 | `info` | Fastify 日志级别 |
+| `TRUST_PROXY` | 否 | 开启 | 信任 `X-Forwarded-For` 取真实客户端 IP（登录限流用）；服务直接暴露公网、前面没有反代时设为 `false` |
+| `RATE_LIMIT_LOGIN` | 否 | `10` | 登录接口每 IP 每分钟上限，`0` 关闭 |
+| `RATE_LIMIT_REGISTER` | 否 | `5` | 注册接口每 IP 每分钟上限，`0` 关闭 |
+| `RATE_LIMIT_JOIN` | 否 | `10` | 邀请码加入接口每 IP 每分钟上限，`0` 关闭 |
 | `TZ` | 否 | `Asia/Shanghai` | 容器时区，影响日期归属 |
 
 ## 数据与备份

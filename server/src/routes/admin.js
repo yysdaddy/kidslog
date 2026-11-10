@@ -145,7 +145,7 @@ export default async function adminRoutes(app) {
     if (!newPassword || String(newPassword).length < 6) return reply.code(400).send({ error: '新密码至少 6 位' })
     if (String(newPassword).length > 64) return reply.code(400).send({ error: '新密码过长' })
     db.prepare(`UPDATE users SET password_hash = ?, must_change_pw = ?, token_version = token_version + 1
-                WHERE id = ?`).run(hashPassword(String(newPassword)), forceChange ? 1 : 0, target.id)
+                WHERE id = ?`).run(await hashPassword(String(newPassword)), forceChange ? 1 : 0, target.id)
     writeLog(req, 'user.reset_password', 'user', target.id, target.display_name, { forceChange: !!forceChange })
     return { ok: true }
   })

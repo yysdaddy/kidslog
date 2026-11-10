@@ -49,19 +49,42 @@ function resolveSecret() {
 const SECRET = resolveSecret()
 const TTL_DAYS = 7
 
-export function hashPassword(pw) {
-  const salt = crypto.randomBytes(16).toString('hex')
-  const key = crypto.scryptSync(pw, salt, 64).toString('hex')
-  return `scrypt$${salt}$${key}`
+// scrypt 参数：N=16384 / r=8 / p=1 为 OWASP 推荐的交互式登录基线（约 16MB 内存开销）。
+const SCRYPT = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }
+const KEYLEN = 64
+// 密码长度上限：超长输入直接拒绝，避免把任意长度字符串喂给 KDF
+const MAX_PW_LEN = 1024
+
+function scryptAsync(pw, salt) {
+  return new Promise((resolve, reject) => {
+    // 使用异步版本，避免阻塞事件循环（同步 scrypt 会让单线程服务在登录高峰期卡死）
+    crypto.scrypt(String(pw), salt, KEYLEN, SCRYPT, (err, key) => {
+      if (err) reject(err)
+      else resolve(key)
+    })
+  })
 }
 
-export function verifyPassword(pw, stored) {
-  if (typeof stored !== 'string') return false
+export async function hashPassword(pw) {
+  if (typeof pw !== 'string' || pw.length > MAX_PW_LEN) throw new Error('密码格式非法')
+  const salt = crypto.randomBytes(16).toString('hex')
+  const key = await scryptAsync(pw, salt)
+  return `scrypt$${salt}$${key.toString('hex')}`
+}
+
+export async function verifyPassword(pw, stored) {
+  if (typeof stored !== 'string' || typeof pw !== 'string' || pw.length > MAX_PW_LEN) return false
   const parts = stored.split('$')
   if (parts.length !== 3 || parts[0] !== 'scrypt') return false
   const [, salt, key] = parts
-  const calc = crypto.scryptSync(pw, salt, 64)
   const expected = Buffer.from(key, 'hex')
+  if (expected.length !== KEYLEN) return false
+  let calc
+  try {
+    calc = await scryptAsync(pw, salt)
+  } catch {
+    return false
+  }
   if (calc.length !== expected.length) return false
   return crypto.timingSafeEqual(calc, expected)
 }
@@ -99,9 +122,11 @@ export const cookieOptions = {
   maxAge: TTL_DAYS * 24 * 3600,
 }
 
+// 邀请码：10 位 base32（去掉了易混字符 0/O/1/I），信息熵约 50 bit。
+// 旧版为 8 位（40 bit），在线爆破成本偏低；校验处不做长度强约束，历史邀请码仍可继续使用。
 export function makeInviteCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 32 个字符，256 % 32 === 0 无取模偏差
   let out = ''
-  for (let i = 0; i < 8; i++) out += chars[crypto.getRandomValues(new Uint8Array(1))[0] % chars.length]
+  for (let i = 0; i < 10; i++) out += chars[crypto.randomInt(chars.length)]
   return out
 }
