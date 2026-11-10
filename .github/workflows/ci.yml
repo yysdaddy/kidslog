@@ -75,18 +75,52 @@ jobs:
           done
           echo "syntax ok"
 
-      - name: 缺少 JWT_SECRET 时必须拒绝启动
+      - name: 未设置 JWT_SECRET 时自动生成密钥并启动
         working-directory: server
         env:
+          DATA_DIR: ${{ runner.temp }}/kl-nosecret
+          ALLOW_REGISTRATION: "true"
+          LOG_LEVEL: warn
+        run: |
+          rm -rf "$DATA_DIR"; mkdir -p "$DATA_DIR"
+          env -u JWT_SECRET timeout 20 node --experimental-sqlite src/index.js > "$RUNNER_TEMP/nosecret.log" 2>&1 &
+          pid=$!
+          ok=0
+          for i in $(seq 1 40); do
+            if curl -sf "$BASE/api/health" > /dev/null; then ok=1; break; fi
+            sleep 0.5
+          done
+          kill "$pid" 2>/dev/null || true
+          pkill -f 'experimental-sqlite src/index.js' 2>/dev/null || true
+          for i in $(seq 1 20); do
+            curl -sf "$BASE/api/health" > /dev/null || break
+            sleep 0.5
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "::error::未设置 JWT_SECRET 时应自动生成密钥并正常启动"
+            cat "$RUNNER_TEMP/nosecret.log"
+            exit 1
+          fi
+          if [ ! -s "$DATA_DIR/.jwt_secret" ]; then
+            echo "::error::未在数据目录生成 .jwt_secret"
+            ls -la "$DATA_DIR"
+            exit 1
+          fi
+          echo "自动生成密钥 OK: $(wc -c < "$DATA_DIR/.jwt_secret") 字节"
+
+      - name: JWT_SECRET 过短时必须拒绝启动
+        working-directory: server
+        env:
+          JWT_SECRET: short
           DATA_DIR: ${{ runner.temp }}/kl-data
         run: |
           set +e
-          env -u JWT_SECRET timeout 10 node --experimental-sqlite src/index.js
+          timeout 10 node --experimental-sqlite src/index.js
           code=$?
           set -e
           echo "exit=$code"
           if [ "$code" -ne 1 ]; then
-            echo "::error::未设置 JWT_SECRET 时退出码应为 1，实际为 $code"
+            echo "::error::JWT_SECRET 过短时退出码应为 1，实际为 $code"
             exit 1
           fi
 
