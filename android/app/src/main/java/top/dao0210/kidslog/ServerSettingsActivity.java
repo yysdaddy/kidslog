@@ -145,7 +145,7 @@ public class ServerSettingsActivity extends Activity {
         root.addView(reset);
 
         TextView tip = new TextView(this);
-        tip.setText("提示：进入应用后长按返回键，可随时修改服务器地址。");
+        tip.setText("提示：点击页面右上角「设置」或长按返回键，可随时修改服务器地址；此入口可拖动到不遮挡的位置。");
         tip.setTextSize(12);
         tip.setTextColor(0xFF9CA3AF);
         LinearLayout.LayoutParams tipLp = new LinearLayout.LayoutParams(

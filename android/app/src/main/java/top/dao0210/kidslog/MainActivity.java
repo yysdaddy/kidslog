@@ -4,10 +4,19 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
 import android.webkit.PermissionRequest;
@@ -37,12 +46,21 @@ public class MainActivity extends Activity {
     private String loadedUrl;
     private ValueCallback<Uri[]> fileCallback;
 
+    private FrameLayout content;
+    private TextView settingsEntry;
+    private static final String UI_PREFS = "kidslog_ui";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         web = new WebView(this);
         configureWebView(web);
-        setContentView(web);
+
+        content = new FrameLayout(this);
+        content.addView(web, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setupSettingsEntry();
+        setContentView(content);
 
         if (ServerConfig.get(this) == null) {
             openSettings();
@@ -60,6 +78,119 @@ public class MainActivity extends Activity {
                 loadConfigured();
             }
         }
+    }
+
+    private int dp(int v) {
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v,
+                getResources().getDisplayMetrics()));
+    }
+
+    private int clamp(int v, int min, int max) {
+        if (max < min) {
+            return min;
+        }
+        return Math.max(min, Math.min(max, v));
+    }
+
+    /**
+     * 常驻「设置」入口：右上角半透明小胶囊，可拖动、记忆位置，轻点即进入服务器设置。
+     * 用于手势导航下不便长按返回键的场景；原长按返回键入口保留。
+     */
+    private void setupSettingsEntry() {
+        final SharedPreferences ui = getSharedPreferences(UI_PREFS, MODE_PRIVATE);
+
+        settingsEntry = new TextView(this);
+        settingsEntry.setText("设置");
+        settingsEntry.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        settingsEntry.setTextColor(0xFFFFFFFF);
+        settingsEntry.setGravity(Gravity.CENTER);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xCC1F2937);
+        bg.setCornerRadius(dp(14));
+        settingsEntry.setBackground(bg);
+        settingsEntry.setPadding(dp(10), dp(5), dp(10), dp(5));
+        settingsEntry.setAlpha(0.75f);
+        settingsEntry.setContentDescription("服务器设置");
+
+        final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.TOP | Gravity.START;
+        final int savedX = ui.getInt("btn_x", -1);
+        final int savedY = ui.getInt("btn_y", -1);
+        if (savedX >= 0 && savedY >= 0) {
+            lp.leftMargin = savedX;
+            lp.topMargin = savedY;
+        } else {
+            lp.topMargin = dp(10);
+            settingsEntry.post(new Runnable() {
+                @Override
+                public void run() {
+                    ViewGroup.LayoutParams raw = settingsEntry.getLayoutParams();
+                    if (!(raw instanceof FrameLayout.LayoutParams)) {
+                        return;
+                    }
+                    FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) raw;
+                    p.leftMargin = Math.max(0,
+                            content.getWidth() - settingsEntry.getWidth() - dp(10));
+                    settingsEntry.setLayoutParams(p);
+                }
+            });
+        }
+
+        settingsEntry.setOnTouchListener(new View.OnTouchListener() {
+            private float downX;
+            private float downY;
+            private int startLeft;
+            private int startTop;
+            private boolean moved;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent e) {
+                switch (e.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downX = e.getRawX();
+                        downY = e.getRawY();
+                        FrameLayout.LayoutParams p = (FrameLayout.LayoutParams) v.getLayoutParams();
+                        startLeft = p.leftMargin;
+                        startTop = p.topMargin;
+                        moved = false;
+                        v.setAlpha(1f);
+                        return true;
+                    case MotionEvent.ACTION_MOVE: {
+                        int dx = (int) (e.getRawX() - downX);
+                        int dy = (int) (e.getRawY() - downY);
+                        if (!moved && (Math.abs(dx) > dp(6) || Math.abs(dy) > dp(6))) {
+                            moved = true;
+                        }
+                        if (!moved) {
+                            return true;
+                        }
+                        FrameLayout.LayoutParams p2 = (FrameLayout.LayoutParams) v.getLayoutParams();
+                        p2.leftMargin = clamp(startLeft + dx, 0, content.getWidth() - v.getWidth());
+                        p2.topMargin = clamp(startTop + dy, 0, content.getHeight() - v.getHeight());
+                        v.setLayoutParams(p2);
+                        return true;
+                    }
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        v.setAlpha(0.75f);
+                        if (moved) {
+                            FrameLayout.LayoutParams p3 = (FrameLayout.LayoutParams) v.getLayoutParams();
+                            ui.edit()
+                                    .putInt("btn_x", p3.leftMargin)
+                                    .putInt("btn_y", p3.topMargin)
+                                    .apply();
+                        } else if (e.getActionMasked() == MotionEvent.ACTION_UP) {
+                            openSettings();
+                        }
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+        });
+
+        content.addView(settingsEntry, lp);
     }
 
     private void configureWebView(WebView w) {
