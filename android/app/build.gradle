@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystorePropsFile = rootProject.file('keystore.properties')
+def keystoreProps = new Properties()
+def hasReleaseKey = false
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+    hasReleaseKey = keystoreProps['storeFile'] != null && rootProject.file(keystoreProps['storeFile']).exists()
+}
+
+android {
+    namespace 'top.dao0210.kidslog'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "top.dao0210.kidslog"
+        minSdk 23
+        targetSdk 34
+        versionCode 2
+        versionName "1.2.0"
+        resourceConfigurations += ['zh', 'en']
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            release {
+                storeFile rootProject.file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // 未配置正式签名时退回 debug 签名，保证本地可直接出包
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
+        }
+        debug {
+            applicationIdSuffix ''
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

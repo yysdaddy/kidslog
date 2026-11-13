@@ -36,3 +36,14 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+*.iml
+
+# Android 构建与签名（密钥绝不入库）
+android/.gradle/
+android/local.properties
+android/keystore.properties
+android/keystore/*.jks
+android/keystore/*.keystore
+android/app/build/
+android/captures/
+.cxx/

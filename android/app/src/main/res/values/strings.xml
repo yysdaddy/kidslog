@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">成长记录</string>
+    <string name="settings_title">服务器设置</string>
+</resources>
