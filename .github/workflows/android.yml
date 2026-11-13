@@ -36,7 +36,6 @@ jobs:
           gradle-version: '8.7'
 
       - name: Configure release signing
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         working-directory: android
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -44,14 +43,19 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "未配置 ANDROID_KEYSTORE_BASE64，本次使用 debug 签名出包"
+            exit 0
+          fi
           mkdir -p keystore
           echo "$KEYSTORE_B64" | base64 -d > keystore/kidslog-release.jks
-          cat > keystore.properties <<EOF
-          storeFile=keystore/kidslog-release.jks
-          storePassword=$STORE_PASSWORD
-          keyAlias=$KEY_ALIAS
-          keyPassword=$KEY_PASSWORD
-          EOF
+          {
+            echo "storeFile=keystore/kidslog-release.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+          echo "已写入 release 签名配置"
 
       - name: Build release APK
         working-directory: android
