@@ -58,8 +58,8 @@ public class ServerSettingsActivity extends Activity {
         root.addView(title);
 
         TextView hint = new TextView(this);
-        hint.setText("填写 KidsLog 服务的访问地址。支持域名或局域网 IP，例如：\n"
-                + "https://kids.dao0210.top:52006/\n"
+        hint.setText("填写 KidsLog 服务的访问地址（测试版不预填，请手动输入）。支持域名或局域网 IP，例如：\n"
+                + "https://kids.example.com:52006/\n"
                 + "http://192.168.0.113:8085/");
         hint.setTextSize(13);
         hint.setTextColor(0xFF6B7280);
@@ -71,7 +71,8 @@ public class ServerSettingsActivity extends Activity {
         root.addView(hint, hintLp);
 
         input = new EditText(this);
-        input.setText(ServerConfig.currentOrDefault(this));
+        String saved = ServerConfig.get(this);
+        input.setText(saved == null ? "" : saved);
         input.setHint("http://192.168.0.113:8085/");
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
@@ -127,16 +128,18 @@ public class ServerSettingsActivity extends Activity {
         root.addView(status, statusLp);
 
         TextView reset = new TextView(this);
-        reset.setText("恢复默认地址");
+        reset.setText("清除已保存地址");
         reset.setTextSize(13);
         reset.setTextColor(0xFF2563EB);
         reset.setPadding(0, dp(20), 0, dp(8));
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                input.setText(ServerConfig.DEFAULT_URL);
-                input.setSelection(input.getText().length());
+                ServerConfig.reset(ServerSettingsActivity.this);
+                input.setText("");
                 status.setText("");
+                Toast.makeText(ServerSettingsActivity.this, "已清除，请重新填写地址",
+                        Toast.LENGTH_SHORT).show();
             }
         });
         root.addView(reset);
@@ -155,6 +158,10 @@ public class ServerSettingsActivity extends Activity {
 
     private void save() {
         String norm = ServerConfig.normalize(input.getText().toString());
+        if (norm.isEmpty()) {
+            input.setError("请先填写服务器地址");
+            return;
+        }
         if (!ServerConfig.isValid(norm)) {
             input.setError("地址格式不正确");
             return;
@@ -167,6 +174,10 @@ public class ServerSettingsActivity extends Activity {
 
     private void testConnection() {
         final String norm = ServerConfig.normalize(input.getText().toString());
+        if (norm.isEmpty()) {
+            input.setError("请先填写服务器地址");
+            return;
+        }
         if (!ServerConfig.isValid(norm)) {
             input.setError("地址格式不正确");
             return;

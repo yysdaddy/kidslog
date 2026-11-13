@@ -110,9 +110,9 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 loadConfigured();
             } else if (ServerConfig.get(this) == null) {
-                // 用户取消且从未配置过，给出默认地址兜底，避免停留空白
-                ServerConfig.set(this, ServerConfig.DEFAULT_URL);
-                loadConfigured();
+                // 测试版不预填地址：用户未填写且取消，直接退出，不写入任何默认地址
+                Toast.makeText(this, "尚未设置服务器地址", Toast.LENGTH_SHORT).show();
+                finish();
             }
         } else if (requestCode == REQ_FILE) {
             if (fileCallback == null) {

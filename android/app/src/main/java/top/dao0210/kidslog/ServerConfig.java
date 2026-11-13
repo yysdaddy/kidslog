@@ -11,7 +11,10 @@ import java.util.Locale;
  */
 public final class ServerConfig {
 
-    public static final String DEFAULT_URL = "https://kids.dao0210.top:52006/";
+    /**
+     * 测试版不预填任何地址，空串即视为未配置，全部由用户手动填写。
+     */
+    public static final String DEFAULT_URL = "";
 
     private static final String PREFS = "kidslog_prefs";
     private static final String KEY_SERVER = "server_url";
@@ -47,17 +50,17 @@ public final class ServerConfig {
 
     /**
      * 规范化用户输入：
-     * - 去空白
+     * - 去空白；空输入返回空串（表示未填写，绝不回落到任何默认地址）
      * - 无 scheme 时补 http://（局域网 IP:端口 最常见）
-     * - 去掉末尾多余路径分隔符影响，统一补一个 "/"
+     * - 统一补一个末尾 "/"
      */
     public static String normalize(String raw) {
         if (raw == null) {
-            return DEFAULT_URL;
+            return "";
         }
         String s = raw.trim();
         if (s.isEmpty()) {
-            return DEFAULT_URL;
+            return "";
         }
         String lower = s.toLowerCase(Locale.ROOT);
         if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
