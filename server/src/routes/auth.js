@@ -1,5 +1,5 @@
 import { db, now, uid } from '../db.js'
-import { hashPassword, verifyPassword, signToken, verifyToken, makeInviteCode, COOKIE_NAME, cookieOptions } from '../auth.js'
+import { hashPassword, verifyPassword, signToken, verifyToken, readToken, makeInviteCode, COOKIE_NAME, cookieOptions } from '../auth.js'
 import { limitLogin, limitRegister, limitJoin } from '../rateLimit.js'
 
 export function fullUser(userId) {
@@ -13,11 +13,10 @@ export function fullUser(userId) {
 }
 
 function issueToken(reply, user) {
-  reply.setCookie(
-    COOKIE_NAME,
-    signToken({ uid: user.id, fid: user.family_id, tv: user.token_version || 0 }),
-    cookieOptions,
-  )
+  const token = signToken({ uid: user.id, fid: user.family_id, tv: user.token_version || 0 })
+  reply.setCookie(COOKIE_NAME, token, cookieOptions)
+  // 同时返回给前端，供 App（跨域、无 Cookie 场景）以 Bearer 方式使用
+  return token
 }
 
 export default async function authRoutes(app) {
@@ -55,8 +54,8 @@ export default async function authRoutes(app) {
       .run(userId, familyId, username, await hashPassword(password), displayName || username, isFirstAdmin ? 1 : 0, ts)
 
     const created = db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
-    issueToken(reply, created)
-    return { ok: true, user: fullUser(userId), isFirstAdmin }
+    const token = issueToken(reply, created)
+    return { ok: true, user: fullUser(userId), isFirstAdmin, token }
   })
 
   // 加入家庭
@@ -73,8 +72,8 @@ export default async function authRoutes(app) {
                 VALUES (?, ?, ?, ?, ?, 'member', ?)`)
       .run(userId, fam.id, username, await hashPassword(password), displayName || username, now())
     const created = db.prepare('SELECT * FROM users WHERE id = ?').get(userId)
-    issueToken(reply, created)
-    return { ok: true, user: fullUser(userId) }
+    const token = issueToken(reply, created)
+    return { ok: true, user: fullUser(userId), token }
   })
 
   // 登录
@@ -87,8 +86,8 @@ export default async function authRoutes(app) {
     if ((user.status || 'active') !== 'active') {
       return reply.code(403).send({ error: '账号已被停用，请联系管理员' })
     }
-    issueToken(reply, user)
-    return { ok: true, user: fullUser(user.id) }
+    const token = issueToken(reply, user)
+    return { ok: true, user: fullUser(user.id), token }
   })
 
   app.post('/api/auth/logout', async (req, reply) => {
@@ -97,7 +96,7 @@ export default async function authRoutes(app) {
   })
 
   app.get('/api/me', async (req, reply) => {
-    const p = verifyToken(req.cookies?.[COOKIE_NAME])
+    const p = verifyToken(readToken(req))
     if (!p) return reply.code(401).send({ error: '未登录' })
     const user = fullUser(p.uid)
     if (!user) return reply.code(401).send({ error: '未登录' })

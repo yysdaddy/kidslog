@@ -2,6 +2,7 @@ import type { RecordItem } from '../api'
 import { typeMap, recordSummary } from '../recordTypes'
 import { hhmm } from '../utils'
 import { Play } from 'lucide-react'
+import { mediaSrc } from '../server'
 
 export default function Timeline({
   records, onOpen,
@@ -50,7 +51,7 @@ export default function Timeline({
                   <div className="flex gap-1.5 mt-2">
                     {atts.slice(0, 3).map((a) => (
                       <div key={a.id} className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-100">
-                        <img src={a.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        <img src={mediaSrc(a.thumbUrl)} alt="" className="w-full h-full object-cover" loading="lazy" />
                         {a.kind === 'video' && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                             <Play className="w-3.5 h-3.5 text-white" fill="currentColor" />

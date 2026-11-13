@@ -1,11 +1,12 @@
 import Fastify from 'fastify'
 import cookie from '@fastify/cookie'
+import cors from '@fastify/cors'
 import multipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { verifyToken, COOKIE_NAME } from './auth.js'
+import { verifyToken, readToken } from './auth.js'
 import { db } from './db.js'
 import authRoutes from './routes/auth.js'
 import childrenRoutes from './routes/children.js'
@@ -31,6 +32,12 @@ const app = Fastify({
   trustProxy,
 })
 
+// 安卓 App 以 https://localhost 加载本地前端包，与 API 不同源，需要允许携带凭据的跨域请求
+await app.register(cors, {
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+})
 await app.register(cookie)
 await app.register(multipart, { limits: { fileSize: 200 * 1024 * 1024, files: 1 } })
 
@@ -47,7 +54,7 @@ app.addHook('preHandler', async (req, reply) => {
   if (!req.url.startsWith('/api/')) return
   const pathname = req.url.split('?')[0]
   if (OPEN_PATHS.has(pathname)) return
-  const payload = verifyToken(req.cookies?.[COOKIE_NAME])
+  const payload = verifyToken(readToken(req))
   if (!payload) return reply.code(401).send({ error: '未登录' })
   const u = userStmt.get(payload.uid)
   if (!u || (u.status || 'active') !== 'active') {

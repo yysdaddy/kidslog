@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api, type Attachment } from '../api'
 import Lightbox from '../components/Lightbox'
 import { Play, Loader2 } from 'lucide-react'
+import { mediaSrc } from '../server'
 
 type Props = { childId: string }
 
@@ -103,7 +104,7 @@ export default function Gallery({ childId }: Props) {
                       onClick={() => setViewIndex(idx)}
                       className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 active:opacity-80 transition"
                     >
-                      <img src={a.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={mediaSrc(a.thumbUrl)} alt="" className="w-full h-full object-cover" loading="lazy" />
                       {a.kind === 'video' && (
                         <>
                           <div className="absolute inset-0 bg-black/15" />

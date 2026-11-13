@@ -39,12 +39,9 @@ export default async function accountRoutes(app) {
     db.prepare(`UPDATE users SET password_hash = ?, must_change_pw = 0, token_version = token_version + 1
                 WHERE id = ?`).run(await hashPassword(String(newPassword)), u.id)
     const fresh = currentUser(u.id)
-    reply.setCookie(
-      COOKIE_NAME,
-      signToken({ uid: fresh.id, fid: fresh.family_id, tv: fresh.token_version || 0 }),
-      cookieOptions,
-    )
-    return { ok: true, user: fullUser(u.id) }
+    const token = signToken({ uid: fresh.id, fid: fresh.family_id, tv: fresh.token_version || 0 })
+    reply.setCookie(COOKIE_NAME, token, cookieOptions)
+    return { ok: true, user: fullUser(u.id), token }
   })
 
   // 家庭成员列表

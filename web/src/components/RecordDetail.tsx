@@ -5,6 +5,7 @@ import { hhmm } from '../utils'
 import Lightbox from './Lightbox'
 import { X, Pencil, Play, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { mediaSrc } from '../server'
 
 type Props = {
   record: RecordItem
@@ -100,7 +101,7 @@ export default function RecordDetail({ record, onClose, onEdit, onDeleted }: Pro
                     onClick={() => setView(i)}
                     className="relative aspect-square rounded-lg overflow-hidden bg-slate-100"
                   >
-                    <img src={a.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    <img src={mediaSrc(a.thumbUrl)} alt="" className="w-full h-full object-cover" loading="lazy" />
                     {a.kind === 'video' && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                         <Play className="w-5 h-5 text-white" fill="currentColor" />

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { api, type Child, type User } from '../api'
 import { ageLabel } from '../utils'
-import { UserPlus, LogOut, HardDrive, Copy, Check, ChevronRight, KeyRound, Users, UserCog, ShieldCheck, Pencil } from 'lucide-react'
+import { UserPlus, LogOut, HardDrive, Copy, Check, ChevronRight, KeyRound, Users, UserCog, ShieldCheck, Pencil, Server } from 'lucide-react'
 import AccountSheet from '../components/AccountSheet'
 import FamilySheet from '../components/FamilySheet'
+import { NativeSettings, isNative, openServerSettings } from '../native'
 
 type Props = {
   user: User
@@ -28,9 +29,12 @@ export default function Me({ user, children, activeId, onSelectChild, onAddChild
   const [storage, setStorage] = useState<{ usedBytes: number; quotaBytes: number } | null>(null)
   const [copied, setCopied] = useState(false)
   const [sheet, setSheet] = useState<'profile' | 'password' | 'family' | null>(null)
+  const [serverUrl, setServerUrl] = useState('')
+  const native = isNative()
 
   useEffect(() => {
     api.storage().then(setStorage).catch(() => {})
+    if (isNative()) NativeSettings.getServer().then((r) => setServerUrl(r?.url || '')).catch(() => {})
     api.account().then((r) => onUserChange({ ...user, ...r.user })).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -157,6 +161,19 @@ export default function Me({ user, children, activeId, onSelectChild, onAddChild
           <div className="h-full bg-brand-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
         </div>
       </div>
+
+      {native && (
+        <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
+          <button onClick={() => openServerSettings()} className={rowCls}>
+            <Server className="w-4 h-4 text-slate-400" strokeWidth={1.8} />
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-sm text-brand-800">服务器设置</p>
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">{serverUrl || '未配置'}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+          </button>
+        </div>
+      )}
 
       <button onClick={onLogout} className="w-full py-3.5 bg-white rounded-2xl shadow-soft text-rose-500 text-sm flex items-center justify-center gap-2">
         <LogOut className="w-4 h-4" /> 退出登录

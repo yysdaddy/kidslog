@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type User } from '../api'
 import { Baby, ShieldCheck } from 'lucide-react'
+import { NativeSettings, isNative, openServerSettings } from '../native'
 
 type Mode = 'login' | 'register' | 'join'
 
@@ -14,8 +15,11 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
+  const [server, setServer] = useState('')
+  const native = isNative()
 
   useEffect(() => {
+    if (native) NativeSettings.getServer().then((r) => setServer(r?.url || '')).catch(() => {})
     api.setup().then((r) => {
       setNeedsSetup(r.needsSetup)
       if (r.needsSetup) setMode('register')
@@ -138,6 +142,15 @@ export default function Login({ onLogin }: { onLogin: (u: User) => void }) {
       <p className="text-xs text-slate-400 text-center mt-8 leading-relaxed">
         数据保存在你自己的服务器上<br />不与任何第三方共享
       </p>
+
+      {native && (
+        <button
+          onClick={() => openServerSettings()}
+          className="mx-auto mt-4 block max-w-[80%] truncate text-[11px] text-slate-400 underline underline-offset-2"
+        >
+          服务器：{server || '未配置'}（点击修改）
+        </button>
+      )}
     </div>
   )
 }

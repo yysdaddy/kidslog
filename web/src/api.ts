@@ -1,3 +1,22 @@
+import { apiUrl } from './server'
+
+// App 跨域场景使用 Bearer Token；Web 同源场景继续走 HttpOnly Cookie，两者互不干扰
+const TOKEN_KEY = 'kidslog.token'
+
+export function getToken(): string {
+  try { return localStorage.getItem(TOKEN_KEY) || '' } catch { return '' }
+}
+export function setToken(t: string | null) {
+  try {
+    if (t) localStorage.setItem(TOKEN_KEY, t)
+    else localStorage.removeItem(TOKEN_KEY)
+  } catch { /* ignore */ }
+}
+function authHeaders(headers: Record<string, string>): Record<string, string> {
+  const token = getToken()
+  if (token && !headers['Authorization']) headers['Authorization'] = `Bearer ${token}`
+  return headers
+}
 export type User = {
   id: string
   username: string
@@ -177,11 +196,11 @@ export type StatsDaily = {
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   // 仅在有 body 时声明 JSON，避免 Fastify 对空 body 的 DELETE/POST 返回 400
-  const headers: Record<string, string> = { ...((options.headers as Record<string, string>) || {}) }
+  const headers: Record<string, string> = authHeaders({ ...((options.headers as Record<string, string>) || {}) })
   if (options.body != null && !(options.body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json'
   }
-  const res = await fetch(path, { credentials: 'include', ...options, headers })
+  const res = await fetch(apiUrl(path), { credentials: 'include', ...options, headers })
   const text = await res.text()
   let data: any = null
   try { data = text ? JSON.parse(text) : null } catch { data = null }
@@ -201,8 +220,10 @@ export function uploadMedia(
     const form = new FormData()
     form.append('file', file)
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', `/api/media?childId=${encodeURIComponent(childId)}`)
+    xhr.open('POST', apiUrl(`/api/media?childId=${encodeURIComponent(childId)}`))
     xhr.withCredentials = true
+    const tk = getToken()
+    if (tk) xhr.setRequestHeader('Authorization', `Bearer ${tk}`)
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100))
     }
@@ -221,13 +242,25 @@ export function uploadMedia(
 export const api = {
   me: () => request<{ user: User }>('/api/me'),
   setup: () => request<{ needsSetup: boolean; userCount: number }>('/api/auth/setup'),
-  login: (username: string, password: string) =>
-    request<{ user: User }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  register: (body: { username: string; password: string; displayName?: string; familyName?: string }) =>
-    request<{ user: User }>('/api/auth/register', { method: 'POST', body: JSON.stringify(body) }),
-  join: (body: { username: string; password: string; displayName?: string; inviteCode: string }) =>
-    request<{ user: User }>('/api/auth/join', { method: 'POST', body: JSON.stringify(body) }),
-  logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
+  login: async (username: string, password: string) => {
+    const r = await request<{ user: User; token?: string }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) })
+    setToken(r.token || null)
+    return r
+  },
+  register: async (body: { username: string; password: string; displayName?: string; familyName?: string }) => {
+    const r = await request<{ user: User; token?: string }>('/api/auth/register', { method: 'POST', body: JSON.stringify(body) })
+    setToken(r.token || null)
+    return r
+  },
+  join: async (body: { username: string; password: string; displayName?: string; inviteCode: string }) => {
+    const r = await request<{ user: User; token?: string }>('/api/auth/join', { method: 'POST', body: JSON.stringify(body) })
+    setToken(r.token || null)
+    return r
+  },
+  logout: async () => {
+    setToken(null)
+    return request<{ ok: true }>('/api/auth/logout', { method: 'POST' })
+  },
 
   children: () => request<{ children: Child[] }>('/api/children'),
   createChild: (body: Partial<Child>) =>
@@ -307,11 +340,14 @@ export const api = {
   account: () => request<{ user: User }>('/api/me/account'),
   updateProfile: (displayName: string) =>
     request<{ ok: true; user: User }>('/api/me', { method: 'PATCH', body: JSON.stringify({ displayName }) }),
-  changePassword: (oldPassword: string, newPassword: string) =>
-    request<{ ok: true; user: User }>('/api/me/password', {
+  changePassword: async (oldPassword: string, newPassword: string) => {
+    const r = await request<{ ok: true; user: User; token?: string }>('/api/me/password', {
       method: 'POST',
       body: JSON.stringify({ oldPassword, newPassword }),
-    }),
+    })
+    setToken(r.token || null)
+    return r
+  },
   members: () => request<{ members: FamilyMember[]; canManage: boolean }>('/api/family/members'),
   updateFamilyName: (name: string) =>
     request<{ ok: true; familyName: string }>('/api/family', { method: 'PATCH', body: JSON.stringify({ name }) }),

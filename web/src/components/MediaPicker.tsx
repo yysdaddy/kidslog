@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { uploadMedia, api, type Attachment } from '../api'
 import { Camera, ImagePlus, X, Play, Loader2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { mediaSrc } from '../server'
 
 type Props = {
   childId: string
@@ -62,7 +63,7 @@ export default function MediaPicker({ childId, value, onChange, max = 9 }: Props
       <div className="grid grid-cols-3 gap-2">
         {value.map((a) => (
           <div key={a.id} className="relative aspect-square rounded-xl overflow-hidden bg-slate-100">
-            <img src={a.thumbUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <img src={mediaSrc(a.thumbUrl)} alt="" className="w-full h-full object-cover" loading="lazy" />
             {a.kind === 'video' && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <Play className="w-6 h-6 text-white drop-shadow" fill="currentColor" />

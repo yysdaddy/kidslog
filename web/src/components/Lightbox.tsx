@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, type Attachment } from '../api'
 import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { mediaSrc } from '../server'
 
 type Props = {
   items: Attachment[]
@@ -52,14 +53,14 @@ export default function Lightbox({ items, index, onClose, onDeleted }: Props) {
         {cur.kind === 'video' ? (
           <video
             key={cur.id}
-            src={cur.url}
+            src={mediaSrc(cur.url)}
             className="max-w-full max-h-full"
             controls
             autoPlay
             playsInline
           />
         ) : (
-          <img key={cur.id} src={cur.url} alt="" className="max-w-full max-h-full object-contain" />
+          <img key={cur.id} src={mediaSrc(cur.url)} alt="" className="max-w-full max-h-full object-contain" />
         )}
 
         {i > 0 && (

@@ -98,6 +98,15 @@ export function signToken(payload, days = TTL_DAYS) {
   return `${body}.${sig}`
 }
 
+/**
+ * 取请求中的登录令牌：优先 Authorization: Bearer（App 跨域场景），回落到 HttpOnly Cookie（Web 场景）
+ */
+export function readToken(req) {
+  const h = req?.headers?.authorization || ''
+  if (typeof h === 'string' && h.startsWith('Bearer ')) return h.slice(7).trim()
+  return req?.cookies?.[COOKIE_NAME]
+}
+
 export function verifyToken(token) {
   if (typeof token !== 'string' || !token.includes('.')) return null
   const [body, sig] = token.split('.')
