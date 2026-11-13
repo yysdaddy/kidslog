@@ -1,0 +1,114 @@
+#0 building with "builder-54fb1622-1f76-4947-9c3c-dbb3c47cd4e6" instance using docker-container driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.14kB done
+#1 DONE 0.0s
+
+#2 [auth] library/node:pull token for registry-1.docker.io
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-slim
+#3 DONE 0.6s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 152B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 520.22kB 0.0s done
+#5 DONE 0.0s
+
+#6 [web-build 1/6] FROM docker.io/library/node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+#6 resolve docker.io/library/node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee done
+#6 sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 448B / 448B 0.1s done
+#6 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 1.71MB / 1.71MB 0.2s done
+#6 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 0B / 49.90MB 0.2s
+#6 sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 3.31kB / 3.31kB 0.2s done
+#6 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 28.25MB / 28.25MB 0.3s
+#6 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 31.46MB / 49.90MB 0.6s
+#6 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 28.25MB / 28.25MB 0.3s done
+#6 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3
+#6 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 49.90MB / 49.90MB 0.8s
+#6 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 49.90MB / 49.90MB 0.9s done
+#6 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 0.5s done
+#6 extracting sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 done
+#6 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79
+#6 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 0.7s done
+#6 DONE 1.7s
+
+#6 [web-build 1/6] FROM docker.io/library/node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+#6 extracting sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0.0s done
+#6 extracting sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e done
+#6 DONE 1.7s
+
+#7 [web-build 2/6] WORKDIR /app/web
+#7 DONE 1.4s
+
+#8 [runtime 2/8] WORKDIR /app
+#8 DONE 1.4s
+
+#9 [web-build 3/6] COPY web/package.json web/package-lock.json* ./
+#9 DONE 0.0s
+
+#10 [runtime 3/8] RUN apt-get update  && apt-get install -y --no-install-recommends ffmpeg  && apt-get clean  && find /var/lib/apt/lists -mindepth 1 -delete
+#10 0.114 Get:1 http://deb.debian.org/debian bookworm InRelease [151 kB]
+#10 0.142 Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+#10 0.152 Get:3 http://deb.debian.org/debian-security bookworm-security InRelease [34.8 kB]
+#10 0.192 Get:4 http://deb.debian.org/debian bookworm/main amd64 Packages [8790 kB]
+#10 0.265 Get:5 http://deb.debian.org/debian bookworm-updates/main amd64 Packages [6924 B]
+#10 0.275 Get:6 http://deb.debian.org/debian-security bookworm-security/main amd64 Packages [368 kB]
+#10 ...
+
+#11 [web-build 4/6] RUN npm config set registry "https://registry.npmjs.org"  && npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000
+#11 0.652 npm error code ERESOLVE
+#11 0.652 npm error ERESOLVE could not resolve
+#11 0.652 npm error
+#11 0.652 npm error While resolving: @types/react-dom@18.3.7
+#11 0.652 npm error Found: @types/react@19.3.0
+#11 0.652 npm error node_modules/@types/react
+#11 0.652 npm error   dev @types/react@"^19.3.0" from the root project
+#11 0.652 npm error
+#11 0.652 npm error Could not resolve dependency:
+#11 0.652 npm error peer @types/react@"^18.0.0" from @types/react-dom@18.3.7
+#11 0.652 npm error node_modules/@types/react-dom
+#11 0.652 npm error   dev @types/react-dom@"^18.3.5" from the root project
+#11 0.652 npm error
+#11 0.652 npm error Conflicting peer dependency: @types/react@18.3.31
+#11 0.652 npm error node_modules/@types/react
+#11 0.652 npm error   peer @types/react@"^18.0.0" from @types/react-dom@18.3.7
+#11 0.652 npm error   node_modules/@types/react-dom
+#11 0.652 npm error     dev @types/react-dom@"^18.3.5" from the root project
+#11 0.652 npm error
+#11 0.652 npm error Fix the upstream dependency conflict, or retry
+#11 0.652 npm error this command with --force or --legacy-peer-deps
+#11 0.652 npm error to accept an incorrect (and potentially broken) dependency resolution.
+#11 0.652 npm error
+#11 0.652 npm error
+#11 0.652 npm error For a full report see:
+#11 0.652 npm error /root/.npm/_logs/2026-11-13T10_00_39_792Z-eresolve-report.txt
+#11 0.653 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-13T10_00_39_792Z-debug-0.log
+#11 ERROR: process "/bin/sh -c npm config set registry \"$NPM_REGISTRY\"  && npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000" did not complete successfully: exit code: 1
+
+#10 [runtime 3/8] RUN apt-get update  && apt-get install -y --no-install-recommends ffmpeg  && apt-get clean  && find /var/lib/apt/lists -mindepth 1 -delete
+#10 CANCELED
+------
+ > [web-build 4/6] RUN npm config set registry "https://registry.npmjs.org"  && npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000:
+0.652 npm error     dev @types/react-dom@"^18.3.5" from the root project
+0.652 npm error
+0.652 npm error Fix the upstream dependency conflict, or retry
+0.652 npm error this command with --force or --legacy-peer-deps
+0.652 npm error to accept an incorrect (and potentially broken) dependency resolution.
+0.652 npm error
+0.652 npm error
+0.652 npm error For a full report see:
+0.652 npm error /root/.npm/_logs/2026-11-13T10_00_39_792Z-eresolve-report.txt
+0.653 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-11-13T10_00_39_792Z-debug-0.log
+------
+Dockerfile:7
+--------------------
+   6 |     COPY web/package.json web/package-lock.json* ./
+   7 | >>> RUN npm config set registry "$NPM_REGISTRY" \
+   8 | >>>  && npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000
+   9 |     COPY web/ ./
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c npm config set registry \"$NPM_REGISTRY\"  && npm install --no-audit --no-fund --fetch-retries=5 --fetch-timeout=120000" did not complete successfully: exit code: 1
