@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">成长记录(测试)</string>
+    <string name="title_activity_main">成长记录(测试)</string>
+    <string name="package_name">top.dao0210.kidslog.test</string>
+    <string name="custom_url_scheme">top.dao0210.kidslog.test</string>
+    <string name="title_server_setup">服务器设置</string>
+</resources>

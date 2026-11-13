@@ -1,0 +1,14 @@
+{
+  "name": "kidslog-mobile",
+  "private": true,
+  "version": "1.2.2",
+  "description": "KidsLog Android app built with Capacitor",
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  }
+}

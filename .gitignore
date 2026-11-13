@@ -47,3 +47,15 @@ android/keystore/*.keystore
 android/app/build/
 android/captures/
 .cxx/
+
+# Capacitor 移动端工程
+mobile/node_modules/
+mobile/www/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/keystore.properties
+mobile/android/keystore/*.jks
+mobile/android/keystore/*.keystore
+mobile/android/app/build/
+mobile/android/capacitor-cordova-android-plugins/
+mobile/android/app/src/main/assets/public/
