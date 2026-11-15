@@ -57,7 +57,8 @@ jobs:
           npm config set registry https://registry.npmjs.org
           sed -i 's#https://registry.npmmirror.com#https://registry.npmjs.org#g' package-lock.json
           npm ci --no-audit --no-fund || npm install --no-audit --no-fund
-          npx cap copy android
+          # cap sync = copy + update，负责生成 capacitor-cordova-android-plugins/cordova.variables.gradle
+          npx cap sync android
 
       - name: Configure release signing
         working-directory: mobile/android
