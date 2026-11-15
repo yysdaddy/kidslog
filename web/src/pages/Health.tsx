@@ -3,6 +3,7 @@ import {
   api, type Child, type HealthOverview, type RecordItem, type Vaccine,
 } from '../api'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 import RecordSheet from '../components/RecordSheet'
 import RecordDetail from '../components/RecordDetail'
 import DateField from '../components/DateField'
@@ -327,6 +328,7 @@ function VaccineSheet({
   onSaved: () => void
 }) {
   useScrollLock()
+  useBackHandler(onClose)
   const [name, setName] = useState(vaccine?.name || '')
   const [doseNo, setDoseNo] = useState(String(vaccine?.doseNo || 1))
   const [dueDate, setDueDate] = useState(vaccine?.dueDate || '')

@@ -4,6 +4,7 @@ import DateField from './DateField'
 import { todayStr } from '../utils'
 import { X, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 
 export default function ChildForm({
   child, onClose, onSaved, onDeleted,
@@ -14,6 +15,8 @@ export default function ChildForm({
   onDeleted?: (id: string) => void
 }) {
   useScrollLock()
+
+  useBackHandler(onClose)
   const editing = !!child
   const [name, setName] = useState(child?.name || '')
   const [nickname, setNickname] = useState(child?.nickname || '')

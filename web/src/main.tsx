@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import { NativeSettings, isNative, openServerSettings } from './native'
 import { loadServerBaseFromStorage, setServerBase } from './server'
+import { installBackHandlerBridge } from './backStack'
 
 function NoServer() {
   return (
@@ -23,6 +24,8 @@ function NoServer() {
 }
 
 async function boot() {
+  // 安卓返回键交给前端处理：先关弹层，再由原生决定后退/退出
+  installBackHandlerBridge()
   let configured = true
   if (isNative()) {
     try {

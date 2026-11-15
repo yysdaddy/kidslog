@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useBackHandler } from '../hooks/useBackHandler';
 
 /**
  * 统一的日期 / 日期时间选择器
@@ -72,6 +73,15 @@ export default function DateField({
   const [yearBase, setYearBase] = useState(Math.floor(new Date().getFullYear() / 10) * 10);
 
   const draft = `${year}-${pad2(month)}-${pad2(day)}`;
+
+  // 返回键：选年面板展开时先收起面板，否则关闭日历
+  useBackHandler(() => {
+    if (pickYear) {
+      setPickYear(false)
+      return
+    }
+    setOpen(false)
+  }, open)
 
   // 打开时用当前值初始化草稿
   useEffect(() => {

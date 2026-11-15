@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, type FamilyMember, type User } from '../api'
 import { X, Copy, Check, Pencil, Trash2, RefreshCw, Crown } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 
 type Props = {
   user: User
@@ -15,6 +16,8 @@ function joinDate(v: string) {
 
 export default function FamilySheet({ user, onClose, onUserChange }: Props) {
   useScrollLock()
+
+  useBackHandler(onClose)
   const [members, setMembers] = useState<FamilyMember[]>([])
   const [canManage, setCanManage] = useState(false)
   const [loading, setLoading] = useState(true)

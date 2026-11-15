@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api, type User } from '../api'
 import { X, KeyRound, UserCog } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 
 type Props = {
   mode: 'profile' | 'password'
@@ -12,6 +13,8 @@ type Props = {
 
 export default function AccountSheet({ mode, user, onClose, onUserChange }: Props) {
   useScrollLock()
+
+  useBackHandler(onClose)
   const [name, setName] = useState(user.displayName || '')
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')

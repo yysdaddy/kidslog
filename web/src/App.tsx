@@ -10,6 +10,7 @@ import Admin from './pages/Admin'
 import ChildForm from './components/ChildForm'
 import ForcePassword from './components/ForcePassword'
 import { todayStr } from './utils'
+import { useBackHandler } from './hooks/useBackHandler'
 import { ClipboardList, TrendingUp, CalendarDays, HeartPulse, User as UserIcon } from 'lucide-react'
 
 type Tab = 'home' | 'growth' | 'calendar' | 'health' | 'me'
@@ -33,6 +34,9 @@ export default function App() {
   const openAddChild = () => setChildForm({ mode: 'new' })
   const openEditChild = (c: Child) => setChildForm({ mode: 'edit', child: c })
   const [adminOpen, setAdminOpen] = useState(false)
+
+  // 管理后台是全屏页，返回键回到主界面
+  useBackHandler(() => setAdminOpen(false), adminOpen)
 
   const loadChildren = useCallback(async () => {
     try {

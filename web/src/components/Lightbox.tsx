@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, type Attachment } from '../api'
 import { X, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 import { mediaSrc } from '../server'
 
 type Props = {
@@ -13,6 +14,8 @@ type Props = {
 
 export default function Lightbox({ items, index, onClose, onDeleted }: Props) {
   useScrollLock()
+
+  useBackHandler(onClose)
   const [i, setI] = useState(index)
   const cur = items[i]
 

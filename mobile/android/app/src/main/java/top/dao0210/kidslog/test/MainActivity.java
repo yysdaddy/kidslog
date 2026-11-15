@@ -25,6 +25,33 @@ public class MainActivity extends BridgeActivity {
         setupDownloader();
     }
 
+    /**
+     * 返回键（含全面屏手势返回）：先问前端有没有弹层/子页面要关，
+     * 前端返回 "1" 表示已消费（关掉了弹层），此时不退出 App；
+     * 否则能后退就后退，不能后退才退出。
+     * 修复：添加记录等弹层里按返回键直接退出 App 的问题。
+     */
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        WebView webView = getBridge() != null ? getBridge().getWebView() : null;
+        if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        webView.evaluateJavascript(
+                "(function(){try{return window.__kidslogHandleBack && window.__kidslogHandleBack() ? '1' : '0'}catch(e){return '0'}})()",
+                value -> {
+                    String v = value == null ? "" : value.replace("\"", "").trim();
+                    if ("1".equals(v)) return;
+                    if (webView.canGoBack()) {
+                        webView.goBack();
+                        return;
+                    }
+                    MainActivity.super.onBackPressed();
+                });
+    }
+
     @Override
     public void onResume() {
         super.onResume();

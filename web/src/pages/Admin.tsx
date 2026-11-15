@@ -5,6 +5,7 @@ import {
   Home, Plus, Trash2, RefreshCw, X, AlertTriangle, Pencil,
 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 
 type Props = {
   user: User
@@ -316,6 +317,7 @@ export default function Admin({ user, onBack }: Props) {
 
 function Sheet({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   useScrollLock()
+  useBackHandler(onClose)
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 overscroll-contain" onClick={onClose}>
       <div

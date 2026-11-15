@@ -7,6 +7,7 @@ import MediaPicker from './MediaPicker'
 import DateField from './DateField'
 import { X, Check, ArrowLeft, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 
 type Props = {
   childId: string
@@ -46,6 +47,15 @@ export default function RecordSheet({ childId, birthDate, initialType, editing, 
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const savedRef = useRef(false)
+
+  // 返回键：优先取消删除确认，否则关闭表单（close 会清理未保存的附件）
+  useBackHandler(() => {
+    if (confirmDelete) {
+      setConfirmDelete(false)
+      return
+    }
+    close()
+  })
 
   // 关闭时清理本次上传但未保存绑定记录的附件
   function close() {

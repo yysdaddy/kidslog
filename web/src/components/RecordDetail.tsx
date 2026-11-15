@@ -5,6 +5,7 @@ import { hhmm } from '../utils'
 import Lightbox from './Lightbox'
 import { X, Pencil, Play, Trash2 } from 'lucide-react'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { useBackHandler } from '../hooks/useBackHandler'
 import { mediaSrc } from '../server'
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
 
 export default function RecordDetail({ record, onClose, onEdit, onDeleted }: Props) {
   useScrollLock()
+
+  useBackHandler(onClose)
   const def = typeMap[record.type]
   const Icon = def?.icon
   const [view, setView] = useState<number | null>(null)
