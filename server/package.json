@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node --experimental-sqlite src/index.js",
-    "dev": "node --experimental-sqlite --watch src/index.js"
+    "dev": "node --experimental-sqlite --watch src/index.js",
+    "reset-password": "node --experimental-sqlite scripts/reset-password.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

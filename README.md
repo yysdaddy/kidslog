@@ -181,6 +181,33 @@ data/
 tar czf kidslog-$(date +%F).tar.gz -C . data
 ```
 
+## 忘记密码 / 命令行重置密码
+
+网页端没有自助找回密码。管理员可在「系统管理 → 成员」里重置他人的密码；若管理员自己也忘了密码、或全家都进不去，可在服务器命令行重置。
+
+```bash
+# 1) 列出账号（确认用户名）
+docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs --list
+
+# 2) 交互式重置（推荐：密码不回显，也不进 shell 历史）
+docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs dao0210
+
+# 3) 或直接指定新密码（会提示可能留在 shell 历史中）
+docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs dao0210 'NewPass123'
+```
+
+参数说明：
+
+| 参数 | 说明 |
+| --- | --- |
+| `--list` | 只列出账号（用户名 / 昵称 / 家长或成员 / 管理员 / 状态） |
+| `--no-force-change` | 不强制该账号下次登录时修改密码（默认强制） |
+| `--yes` | 跳过确认提示，便于脚本化调用 |
+
+- 重置会把该账号的 `token_version` 加一，**所有已登录设备立即失效**，需用新密码重新登录。
+- 执行 `docker exec` 没带 `-it`（非交互）且未在参数里给密码时，会自动生成 12 位随机密码并打印一次，务必当场记下。
+- 也可以在容器内用 npm 调用：`docker exec -it kidslog npm run reset-password -- dao0210`。
+
 ## 限制与约定
 
 - 单文件：图片 ≤ 30MB，视频 ≤ 200MB 且时长 ≤ 5 分钟，超限直接拒绝
