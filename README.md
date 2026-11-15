@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/yysdaddy/kidslog/actions/workflows/ci.yml/badge.svg)
 
-**当前版本**：服务端 / Web `0.6.10` · Android `1.2.5-test` · [下载安卓 APK](./apk/kidslog-1.2.5-test.apk) · [更新记录](CHANGELOG.md)
+**当前版本**：服务端 / Web `0.6.11` · Android `1.3.0` · [下载安卓 APK](./apk/kidslog-1.3.0.apk) · [更新记录](CHANGELOG.md)
 
 自托管的家庭育儿记录系统。给家里的小宝宝记喂养、睡眠、身高体重、就医用药和日常出行，
 照片视频一起留档，多设备多家人共用同一份账本。
@@ -73,7 +73,7 @@
 │     └─ components/      # RecordSheet / RecordDetail / Timeline / Lightbox / MediaPicker / StatsView ...
 ├─ mobile/                # 安卓端（Capacitor 工程，当前版本）
 │  ├─ capacitor.config.json
-│  └─ android/            # 原生工程，applicationId top.dao0210.kidslog.test
+│  └─ android/            # 原生工程，applicationId top.yysdaddy.kidslog
 ├─ android/               # 已弃用：早期手写 WebView 壳（1.2.1-test）
 └─ tests/                 # 接口与端到端测试脚本（bash / python）
 ```
@@ -86,7 +86,7 @@ cd kidslog
 cp .env.example .env
 # 填入必填的 JWT 密钥
 openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
-docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.10
+docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.11
 ```
 
 ### 零配置启动（不需要 .env）
@@ -105,8 +105,8 @@ docker compose -f docker-compose.noenv.yml up -d
 启动时不再编译，秒级起服。想换版本或换源，在 `.env` 里设置即可：
 
 ```bash
-KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.10
-# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.10（公开包，无需登录即可拉取）
+KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.11
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.11（公开包，无需登录即可拉取）
 ```
 
 需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
@@ -133,21 +133,21 @@ NPM_REGISTRY=https://registry.npmjs.org \
 
 ## 安卓 App（Android）
 
-安装包随仓库提供：[`apk/kidslog-1.2.3-test.apk`](./apk/kidslog-1.2.3-test.apk)（约 3.1 MB）。
+安装包随仓库提供：[`apk/kidslog-1.3.0.apk`](./apk/kidslog-1.3.0.apk)（约 3.1 MB），正式版，版本名不再带 `-test` 后缀。
 
 | 项目 | 值 |
 | --- | --- |
-| 版本 | `1.2.3-test`（versionCode 5） |
-| 应用 ID | `top.dao0210.kidslog.test`（测试版专属，可与正式包共存） |
-| 最低系统 | Android 6.0（API 23） |
-| 签名 | release keystore 自签名，SHA-256 见 `apk/SHA256SUMS.txt` |
+| 版本 | `1.3.0`（versionCode 8，正式版） |
+| 应用 ID | `top.yysdaddy.kidslog` |
+| 最低系统 | Android 5.1（API 22） |
+| 签名 | release keystore 自签名，SHA-256 `76:17:F9:DA:E7:41:AC:D9:66:8A:00:28:E1:72:1D:67:D7:62:FC:67:39:33:5C:5E:D2:93:AF:34:CB:1D:EA:FD` |
 | 权限 | 网络、相机、麦克风、相册读取（上传附件用） |
 
 安装后首次启动会要求填写服务器地址（如 `https://kids.example.com` 或 `http://192.168.1.10:8080`），
 点「测试连接」确认可达后再保存；之后可在「我的 → 服务器设置」里随时修改。
 
 - **返回键行为**：物理返回键优先关闭当前弹层/子页面，栈为空时才退出 App。
-- **升级覆盖**：需与已安装版本签名一致；直接从新 APK 覆盖安装即可，服务端数据不受影响。
+- **升级覆盖**：需与已安装版本签名一致。`1.3.0` 起换了新签名证书，从早期测试版升级需先卸载旧包（服务端数据不受影响）。
 - **重新构建**（需 JDK 17 + Android SDK 34 + Gradle 8.7）：
 
 ```bash
@@ -264,9 +264,10 @@ docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs pa
 
 | 版本 | 日期 | 主要变化 |
 | --- | --- | --- |
+| 服务端 `0.6.11` | 2026-11-15 | 源码/文档去除内部标识，安卓应用 ID 统一为 `top.yysdaddy.kidslog` |
 | 服务端 `0.6.10` | 2026-11-15 | 设置页存储卡片文案澄清：「照片与视频占用」+ 底部标注服务器磁盘已用/剩余 |
 | 服务端 `0.6.9` | 2026-11-15 | 命令行重置密码脚本；修复安卓 App 内图片/视频显示损坏（媒体签名 URL）；README 增补运维与安卓章节 |
-| Android `1.2.5-test` | 2026-11-15 | 同步存储卡片文案与磁盘剩余显示 |
+| Android `1.3.0` | 2026-11-15 | 正式版：去掉 `-test` 后缀与应用名「(测试)」，包名改 `top.yysdaddy.kidslog`，release 证书重签 |
 | Android `1.2.3-test` | 2026-11-15 | 改用 Capacitor 打包；物理返回键优先关闭弹层；关闭 release 包 WebView 调试开关 |
 
 升级方式：改 `.env` 里的 `KIDSLOG_IMAGE` 后 `docker compose up -d`，SQLite 结构与数据自动沿用。

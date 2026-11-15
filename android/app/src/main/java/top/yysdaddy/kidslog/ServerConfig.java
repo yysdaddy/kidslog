@@ -1,4 +1,4 @@
-package top.dao0210.kidslog;
+package top.yysdaddy.kidslog;
 
 import android.content.Context;
 import android.content.SharedPreferences;

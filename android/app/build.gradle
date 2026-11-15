@@ -11,12 +11,12 @@ if (keystorePropsFile.exists()) {
 }
 
 android {
-    namespace 'top.dao0210.kidslog'
+    namespace 'top.yysdaddy.kidslog'
     compileSdk 34
 
     defaultConfig {
         // 测试版独立包名，可与正式版共存，不覆盖原包
-        applicationId "top.dao0210.kidslog.test"
+        applicationId "top.yysdaddy.kidslog"
         minSdk 23
         targetSdk 34
         versionCode 3

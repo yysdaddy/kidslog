@@ -24,7 +24,7 @@
 ```
 android/
 ├── app/src/main/
-│   ├── java/top/dao0210/kidslog/
+│   ├── java/top/yysdaddy/kidslog/
 │   │   ├── MainActivity.java           # WebView 壳
 │   │   ├── ServerSettingsActivity.java # 地址配置页
 │   │   └── ServerConfig.java           # 地址存取/规范化/校验
@@ -71,5 +71,5 @@ keyPassword=***
 
 ## 签名说明
 
-- 包名沿用 `top.dao0210.kidslog`，与 1.1.0 相同但签名不同，**覆盖安装会失败，需先卸载旧版**。
+- 包名沿用 `top.yysdaddy.kidslog`，与 1.1.0 相同但签名不同，**覆盖安装会失败，需先卸载旧版**。
 - 签名密钥丢失将无法升级已安装的版本，务必离线备份 `kidslog-release.jks` 与密码。

@@ -4,8 +4,8 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 应用 ID | `top.dao0210.kidslog.test` |
-| 应用名 | 成长记录(测试) |
+| 应用 ID | `top.yysdaddy.kidslog` |
+| 应用名 | 成长记录 |
 | 当前版本 | 1.2.3-test（versionCode 5） |
 | 最低系统 | Android 6.0（API 23） |
 | Capacitor | 6.x |

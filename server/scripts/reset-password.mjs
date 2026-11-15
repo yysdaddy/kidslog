@@ -4,8 +4,8 @@
  *
  * 用法：
  *   node --experimental-sqlite scripts/reset-password.mjs                  # 交互式：选账号 + 输入新密码
- *   node --experimental-sqlite scripts/reset-password.mjs dao0210           # 指定账号，随后交互输入新密码
- *   node --experimental-sqlite scripts/reset-password.mjs dao0210 新密码     # 指定账号与新密码（注意 shell 历史留痕）
+ *   node --experimental-sqlite scripts/reset-password.mjs yysdaddy           # 指定账号，随后交互输入新密码
+ *   node --experimental-sqlite scripts/reset-password.mjs yysdaddy 新密码     # 指定账号与新密码（注意 shell 历史留痕）
  *   node --experimental-sqlite scripts/reset-password.mjs --list            # 只列出账号
  *
  * 选项：

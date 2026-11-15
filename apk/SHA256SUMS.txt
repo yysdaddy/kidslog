@@ -1,3 +1,1 @@
-a3d6e8931c816d9b305b78b38d07a767ae2d95defb1dd2a65cd625e15e9833f8  kidslog-1.2.3-test.apk
-7799beb62d6ce39949dd51b0ba5e618bac03910fb8e5590ca558ac9ef1aaec4b  kidslog-1.2.4-test.apk
-af878fbd6488ba67f7a06ec003a0b74c14e8cff61774ad3effdb7afacd347090  kidslog-1.2.5-test.apk
+580d2545a357babf9403fd3c2b52f361fedd159e27b56230b1d2c60759785d85  kidslog-1.3.0.apk

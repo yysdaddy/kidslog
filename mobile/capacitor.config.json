@@ -1,6 +1,6 @@
 {
-  "appId": "top.dao0210.kidslog.test",
-  "appName": "成长记录(测试)",
+  "appId": "top.yysdaddy.kidslog",
+  "appName": "成长记录",
   "webDir": "www",
   "android": {
     "allowMixedContent": true,

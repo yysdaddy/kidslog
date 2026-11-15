@@ -1,4 +1,4 @@
-package top.dao0210.kidslog.test;
+package top.yysdaddy.kidslog;
 
 import android.app.Activity;
 import android.content.Intent;

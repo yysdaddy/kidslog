@@ -1,9 +1,16 @@
 # 更新记录
 
-版本分两条线：服务端 / Web 走语义化版本（`0.6.x`），Android 走独立版本（`1.2.x-test`）。
+版本分两条线：服务端 / Web 走语义化版本（`0.6.x`），Android 走独立版本（`1.3.x`，1.2.x 为带 `-test` 后缀的测试线）。
 镜像标签与服务端版本一致，安卓安装包放在 [`apk/`](apk/)。
 
 ## 服务端 / Web
+
+### 0.6.11 · 2026-11-15
+
+- 仓库去内部标识：源码、脚本注释、文档中的旧账号/包名片段统一替换为 `yysdaddy`，
+  Java 包路径统一到 `top/yysdaddy/kidslog`。
+- 安卓应用 ID 去测试标记：`top.yysdaddy.kidslog.test` → `top.yysdaddy.kidslog`，应用名「成长记录(测试)」→「成长记录」。
+- 版本号与 `docker-compose.yml`、`docker-compose.noenv.yml`、`.env.example`、镜像标签统一到 `0.6.11`。
 
 ### 0.6.10 · 2026-11-15
 
@@ -54,6 +61,15 @@
 
 ## Android
 
+### 1.3.0 · 2026-11-15
+
+- 正式版：版本名去掉 `-test` 后缀（`1.2.5-test` → `1.3.0`），应用名改为「成长记录」。
+- 应用 ID 统一为 `top.yysdaddy.kidslog`，Java 包路径 `top/yysdaddy/kidslog`；自定义 URL scheme 同步更新。
+- release keystore 重签（DN `CN=yysdaddy, OU=KidsLog, O=yysdaddy`），SHA-256
+  `76:17:F9:DA:E7:41:AC:D9:66:8A:00:28:E1:72:1D:67:D7:62:FC:67:39:33:5C:5E:D2:93:AF:34:CB:1D:EA:FD`。
+- versionCode 8，versionName `1.3.0`；安装包 `apk/kidslog-1.3.0.apk`。
+- 与 1.2.x 测试包包名、签名均不同，覆盖安装会失败，需先卸载旧版。
+
 ### 1.2.5-test · 2026-11-15
 
 - 同步 0.6.10 设置页文案：存储卡片改为「照片与视频占用」，底部补「服务器磁盘已用 xx% · 剩余 xx」。
@@ -74,7 +90,7 @@
 
 ### 1.2.2-test · 2026-11-14
 
-- 迁移到 Capacitor 工程，`applicationId` 仍为 `top.dao0210.kidslog.test`。
+- 迁移到 Capacitor 工程，`applicationId` 仍为 `top.yysdaddy.kidslog`。
 
 ### 1.2.1-test · 2026-11-13
 
