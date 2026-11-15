@@ -2,6 +2,8 @@
 
 ![CI](https://github.com/yysdaddy/kidslog/actions/workflows/ci.yml/badge.svg)
 
+**当前版本**：服务端 / Web `0.6.10` · Android `1.2.5-test` · [下载安卓 APK](./apk/kidslog-1.2.5-test.apk) · [更新记录](CHANGELOG.md)
+
 自托管的家庭育儿记录系统。给家里的小宝宝记喂养、睡眠、身高体重、就医用药和日常出行，
 照片视频一起留档，多设备多家人共用同一份账本。
 
@@ -34,6 +36,7 @@
 - 疫苗计划参考（按月龄提示）
 - 管理员后台：成员管理、重置密码、账号停用、存储配额与自动清理
 - PWA 可安装到手机桌面
+- Android App（Capacitor 打包，可自填服务器地址，见[安卓 App](#安卓-appandroid)）
 
 ## 技术栈
 
@@ -51,6 +54,8 @@
 ├─ docker-compose.build.yml # 可选：从源码本地构建的 override
 ├─ Dockerfile             # 多阶段：前端构建 → 运行时（含 ffmpeg）
 ├─ .env.example           # 环境变量模板
+├─ CHANGELOG.md           # 版本更新记录
+├─ apk/                   # 已构建的安卓安装包
 ├─ server/
 │  └─ src/
 │     ├─ index.js         # Fastify 入口，静态文件 + API + 鉴权钩子
@@ -63,8 +68,13 @@
 │  └─ src/
 │     ├─ App.tsx          # 路由与导航
 │     ├─ recordTypes.tsx  # 记录类型与表单字段定义
+│     ├─ backStack.ts     # 弹层返回栈（配合安卓物理返回键）
 │     ├─ pages/           # Home / Calendar / Growth / Health / Me / Admin / Login
 │     └─ components/      # RecordSheet / RecordDetail / Timeline / Lightbox / MediaPicker / StatsView ...
+├─ mobile/                # 安卓端（Capacitor 工程，当前版本）
+│  ├─ capacitor.config.json
+│  └─ android/            # 原生工程，applicationId top.dao0210.kidslog.test
+├─ android/               # 已弃用：早期手写 WebView 壳（1.2.1-test）
 └─ tests/                 # 接口与端到端测试脚本（bash / python）
 ```
 
@@ -76,7 +86,7 @@ cd kidslog
 cp .env.example .env
 # 填入必填的 JWT 密钥
 openssl rand -hex 32          # 把输出粘到 .env 的 JWT_SECRET
-docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.7
+docker compose up -d          # 默认拉取预构建镜像 yysdaddy/kidslog:0.6.10
 ```
 
 ### 零配置启动（不需要 .env）
@@ -95,8 +105,8 @@ docker compose -f docker-compose.noenv.yml up -d
 启动时不再编译，秒级起服。想换版本或换源，在 `.env` 里设置即可：
 
 ```bash
-KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.7
-# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.7（公开包，无需登录即可拉取）
+KIDSLOG_IMAGE=yysdaddy/kidslog:latest   # 或指定版本，如 :0.6.10
+# 也可用 GHCR：ghcr.io/yysdaddy/kidslog:0.6.10（公开包，无需登录即可拉取）
 ```
 
 需要从源码构建（改了代码、想打自己的镜像）时，叠加 build override：
@@ -120,6 +130,46 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 NPM_REGISTRY=https://registry.npmjs.org \
   docker compose -f docker-compose.yml -f docker-compose.build.yml build
 ```
+
+## 安卓 App（Android）
+
+安装包随仓库提供：[`apk/kidslog-1.2.3-test.apk`](./apk/kidslog-1.2.3-test.apk)（约 3.1 MB）。
+
+| 项目 | 值 |
+| --- | --- |
+| 版本 | `1.2.3-test`（versionCode 5） |
+| 应用 ID | `top.dao0210.kidslog.test`（测试版专属，可与正式包共存） |
+| 最低系统 | Android 6.0（API 23） |
+| 签名 | release keystore 自签名，SHA-256 见 `apk/SHA256SUMS.txt` |
+| 权限 | 网络、相机、麦克风、相册读取（上传附件用） |
+
+安装后首次启动会要求填写服务器地址（如 `https://kids.example.com` 或 `http://192.168.1.10:8080`），
+点「测试连接」确认可达后再保存；之后可在「我的 → 服务器设置」里随时修改。
+
+- **返回键行为**：物理返回键优先关闭当前弹层/子页面，栈为空时才退出 App。
+- **升级覆盖**：需与已安装版本签名一致；直接从新 APK 覆盖安装即可，服务端数据不受影响。
+- **重新构建**（需 JDK 17 + Android SDK 34 + Gradle 8.7）：
+
+```bash
+cd web && npm run build
+rm -rf ../mobile/www/* && cp -rf dist/. ../mobile/www/
+cd ../mobile && npm install && npx cap copy android
+cd android && gradle assembleRelease    # 产物：app/build/outputs/apk/release/app-release.apk
+```
+
+签名参数放在 `mobile/android/keystore.properties`（不入库），格式：
+
+```properties
+storeFile=keystore/kidslog-release.jks
+storePassword=***
+keyAlias=kidslog
+keyPassword=***
+```
+
+> 未配置 keystore 时构建出的 APK 使用 debug 签名，仅可本地调试，不能覆盖安装已发布的 release 包。
+
+CI 侧：`.github/workflows/android.yml` 在 `mobile/**`、`web/**` 变更时构建 APK 并作为 artifact 上传；
+推送 `android-v*` 标签会附加到对应 GitHub Release。仓库内 `android/` 目录是 1.2.1 之前的手写 WebView 壳，已停止维护。
 
 ## 本地开发
 
@@ -190,10 +240,10 @@ tar czf kidslog-$(date +%F).tar.gz -C . data
 docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs --list
 
 # 2) 交互式重置（推荐：密码不回显，也不进 shell 历史）
-docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs dao0210
+docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs parent
 
 # 3) 或直接指定新密码（会提示可能留在 shell 历史中）
-docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs dao0210 'NewPass123'
+docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs parent 'NewPass123'
 ```
 
 参数说明：
@@ -206,7 +256,20 @@ docker exec -it kidslog node --experimental-sqlite scripts/reset-password.mjs da
 
 - 重置会把该账号的 `token_version` 加一，**所有已登录设备立即失效**，需用新密码重新登录。
 - 执行 `docker exec` 没带 `-it`（非交互）且未在参数里给密码时，会自动生成 12 位随机密码并打印一次，务必当场记下。
-- 也可以在容器内用 npm 调用：`docker exec -it kidslog npm run reset-password -- dao0210`。
+- 也可以在容器内用 npm 调用：`docker exec -it kidslog npm run reset-password -- parent`。
+
+## 更新记录
+
+详见 [CHANGELOG.md](CHANGELOG.md)。最近几次发布：
+
+| 版本 | 日期 | 主要变化 |
+| --- | --- | --- |
+| 服务端 `0.6.10` | 2026-11-15 | 设置页存储卡片文案澄清：「照片与视频占用」+ 底部标注服务器磁盘已用/剩余 |
+| 服务端 `0.6.9` | 2026-11-15 | 命令行重置密码脚本；修复安卓 App 内图片/视频显示损坏（媒体签名 URL）；README 增补运维与安卓章节 |
+| Android `1.2.5-test` | 2026-11-15 | 同步存储卡片文案与磁盘剩余显示 |
+| Android `1.2.3-test` | 2026-11-15 | 改用 Capacitor 打包；物理返回键优先关闭弹层；关闭 release 包 WebView 调试开关 |
+
+升级方式：改 `.env` 里的 `KIDSLOG_IMAGE` 后 `docker compose up -d`，SQLite 结构与数据自动沿用。
 
 ## 限制与约定
 

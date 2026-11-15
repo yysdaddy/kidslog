@@ -1,5 +1,8 @@
 # KidsLog Android 壳（自定义服务器地址）
 
+> **已停止维护**：自 1.2.2-test 起安卓端改用 Capacitor 工程，见 [`../mobile/`](../mobile/README.md)。
+> 本目录仅保留 1.2.0 / 1.2.1 手写 WebView 壳的历史实现，不再更新版本。
+
 纯 WebView 壳，无第三方依赖（仅 Android Framework），用于把 KidsLog 网页打包成 APK，并允许用户自行填写服务器地址。
 
 ## 功能

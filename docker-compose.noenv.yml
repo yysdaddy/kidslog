@@ -9,7 +9,7 @@
 services:
   kidslog:
     # 需 0.6.6 及以上版本才支持免配置自动生成密钥
-    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.7}
+    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.10}
     container_name: kidslog
     restart: unless-stopped
     ports:
@@ -23,7 +23,8 @@ services:
       PORT: "8080"
       # 公网部署建议改为 "false"，家人通过邀请码加入
       ALLOW_REGISTRATION: "true"
-      MEDIA_QUOTA_GB: "20"
+      # 媒体存储上限（GB），0 = 按磁盘剩余空间动态计算
+      MEDIA_QUOTA_GB: "0"
       # 登录/注册/邀请码加入的每 IP 每分钟上限（0 关闭对应限流）
       RATE_LIMIT_LOGIN: "10"
       RATE_LIMIT_REGISTER: "5"

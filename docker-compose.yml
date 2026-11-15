@@ -2,7 +2,7 @@ services:
   kidslog:
     # 默认直接拉取预构建镜像，不本地构建。
     # 可用 .env 覆盖：KIDSLOG_IMAGE=yysdaddy/kidslog:latest
-    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.7}
+    image: ${KIDSLOG_IMAGE:-yysdaddy/kidslog:0.6.10}
     # 需要从源码本地构建时，见 docker-compose.build.yml
     container_name: kidslog
     restart: unless-stopped
@@ -17,7 +17,8 @@ services:
       - PORT=8080
       - JWT_SECRET=${JWT_SECRET:?请先在 .env 中设置 JWT_SECRET，可用 openssl rand -hex 32 生成}
       - ALLOW_REGISTRATION=${ALLOW_REGISTRATION:-true}
-      - MEDIA_QUOTA_GB=20
+      # 媒体存储上限（GB）。0/留空 = 按磁盘剩余空间动态计算
+      - MEDIA_QUOTA_GB=${MEDIA_QUOTA_GB:-0}
       # 登录/注册/邀请码加入的每 IP 每分钟请求上限（0 关闭对应限流）
       - RATE_LIMIT_LOGIN=${RATE_LIMIT_LOGIN:-10}
       - RATE_LIMIT_REGISTER=${RATE_LIMIT_REGISTER:-5}

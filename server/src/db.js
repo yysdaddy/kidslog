@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import fs from 'node:fs'
 import path from 'node:path'
+import { signMediaQuery } from './auth.js'
 
 export const DATA_DIR = process.env.DATA_DIR || '/data'
 export const MEDIA_DIR = path.join(DATA_DIR, 'media')
@@ -170,8 +171,9 @@ export function attachmentToApi(row) {
     status: row.status,
     originalName: row.original_path,
     createdAt: row.created_at,
-    url: `/api/media/${row.id}/file`,
-    thumbUrl: `/api/media/${row.id}/thumb`,
+    // 带上短时效签名：<img>/<video> 请求带不了 Authorization 头
+    url: `/api/media/${row.id}/file?${signMediaQuery(row.id, 'file')}`,
+    thumbUrl: `/api/media/${row.id}/thumb?${signMediaQuery(row.id, 'thumb')}`,
   }
 }
 

@@ -158,11 +158,29 @@ export default async function mediaRoutes(app) {
     return { ok: true }
   })
 
-  // 存储占用
+  // 存储占用：quota 默认按磁盘剩余空间动态计算（used + 可用），不再写死容量
+  // MEDIA_QUOTA_GB > 0 时作为额外上限（小于磁盘可用才生效），便于托管场景限制单实例占用
   app.get('/api/storage', async () => {
     const used = await dirSize(MEDIA_DIR)
-    const quotaGb = Number(process.env.MEDIA_QUOTA_GB || 20)
-    return { usedBytes: used, quotaBytes: quotaGb * 1024 ** 3 }
+    let freeBytes = null
+    let totalBytes = null
+    try {
+      const st = await fsp.statfs(MEDIA_DIR)
+      const bsize = Number(st.bsize) || 0
+      freeBytes = Number(st.bavail) * bsize
+      totalBytes = Number(st.blocks) * bsize
+    } catch {
+      /* 个别文件系统不支持 statfs，忽略，退回仅报媒体占用 */
+    }
+    const capGb = Number(process.env.MEDIA_QUOTA_GB || 0)
+    let quotaBytes
+    if (Number.isFinite(capGb) && capGb > 0) {
+      quotaBytes = capGb * 1024 ** 3
+      if (freeBytes != null) quotaBytes = Math.min(quotaBytes, used + freeBytes)
+    } else {
+      quotaBytes = freeBytes != null ? used + freeBytes : used
+    }
+    return { usedBytes: used, quotaBytes, freeBytes, totalBytes }
   })
 }
 

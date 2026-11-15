@@ -6,7 +6,7 @@ import fastifyStatic from '@fastify/static'
 import path from 'node:path'
 import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { verifyToken, readToken } from './auth.js'
+import { verifyToken, readToken, verifyMediaQuery } from './auth.js'
 import { db } from './db.js'
 import authRoutes from './routes/auth.js'
 import childrenRoutes from './routes/children.js'
@@ -44,6 +44,10 @@ await app.register(multipart, { limits: { fileSize: 200 * 1024 * 1024, files: 1 
 const OPEN_PATHS = new Set(['/api/health', '/api/auth/setup', '/api/auth/login', '/api/auth/register', '/api/auth/join'])
 // 被管理员重置密码后，只允许这些接口，其余全部拦截，强制先改密
 const PW_CHANGE_ALLOWED = new Set(['/api/me', '/api/me/account', '/api/me/password', '/api/auth/logout'])
+const mediaOwnerStmt = db.prepare(`SELECT c.family_id AS fid FROM attachments a
+                                       JOIN children c ON c.id = a.child_id
+                                       WHERE a.id = ?`)
+
 const userStmt = db.prepare(`SELECT id, family_id, display_name, username, role, is_admin, status,
                                     must_change_pw, token_version
                              FROM users WHERE id = ?`)
@@ -54,9 +58,17 @@ app.addHook('preHandler', async (req, reply) => {
   if (!req.url.startsWith('/api/')) return
   const pathname = req.url.split('?')[0]
   if (OPEN_PATHS.has(pathname)) return
+  // 媒体文件：<img>/<video> 无法带 Authorization 头，改为校验服务端签发的短时效签名
+  const mediaMatch = /^\/api\/media\/([^/]+)\/(file|thumb)$/.exec(pathname)
+  if (mediaMatch && verifyMediaQuery(mediaMatch[1], mediaMatch[2], req.query?.exp, req.query?.sig)) {
+    const owner = mediaOwnerStmt.get(mediaMatch[1])
+    if (!owner) return reply.code(404).send({ error: '未找到' })
+    req.user = { uid: null, fid: owner.fid, isAdmin: false, mustChangePw: false, viaMediaSig: true }
+    return
+  }
   const payload = verifyToken(readToken(req))
   if (!payload) return reply.code(401).send({ error: '未登录' })
-  const u = userStmt.get(payload.uid)
+  const u = payload.uid ? userStmt.get(payload.uid) : null
   if (!u || (u.status || 'active') !== 'active') {
     return reply.code(401).send({ error: '登录状态已失效，请重新登录' })
   }

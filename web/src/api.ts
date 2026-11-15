@@ -307,7 +307,13 @@ export const api = {
     return request<{ attachments: Attachment[] }>(`/api/media?${q.toString()}`)
   },
   deleteMedia: (id: string) => request<{ ok: true }>(`/api/media/${id}`, { method: 'DELETE' }),
-  storage: () => request<{ usedBytes: number; quotaBytes: number }>('/api/storage'),
+  storage: () =>
+    request<{
+      usedBytes: number
+      quotaBytes: number
+      freeBytes?: number | null
+      totalBytes?: number | null
+    }>('/api/storage'),
 
   vaccines: (childId: string, status?: 'all' | 'pending' | 'done') => {
     const q = new URLSearchParams({ childId })

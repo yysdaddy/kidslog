@@ -59,3 +59,8 @@ mobile/android/keystore/*.keystore
 mobile/android/app/build/
 mobile/android/capacitor-cordova-android-plugins/
 mobile/android/app/src/main/assets/public/
+
+# 本地打包备份
+mobile/www.bak*/
+mobile/android/app/src/main/assets/*.bak*/
+apk/*.apk

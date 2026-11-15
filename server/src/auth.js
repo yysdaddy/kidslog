@@ -89,6 +89,30 @@ export async function verifyPassword(pw, stored) {
   return crypto.timingSafeEqual(calc, expected)
 }
 
+// ── 媒体资源签名 ──────────────────────────────────────────────
+// <img src> / <video src> 发起的请求无法携带 Authorization 头；安卓 App 以
+// https://localhost 加载前端包，与 API 不同源也无法依赖 Cookie。因此由服务端
+// 为媒体路径签发短时效签名放进查询串，替代请求头鉴权。
+const MEDIA_TTL_SEC = 7 * 24 * 3600
+
+function mediaMac(id, kind, exp) {
+  return crypto.createHmac("sha256", SECRET).update(`media.${id}.${kind}.${exp}`).digest("base64url")
+}
+
+export function signMediaQuery(id, kind, ttlSec = MEDIA_TTL_SEC) {
+  const exp = Math.floor(Date.now() / 1000) + ttlSec
+  return `exp=${exp}&sig=${mediaMac(id, kind, exp)}`
+}
+
+export function verifyMediaQuery(id, kind, exp, sig) {
+  if (!id || !kind || !exp || !sig) return false
+  const e = Number(exp)
+  if (!Number.isFinite(e) || e * 1000 < Date.now()) return false
+  const expect = Buffer.from(mediaMac(id, kind, e))
+  const got = Buffer.from(String(sig))
+  return expect.length === got.length && crypto.timingSafeEqual(expect, got)
+}
+
 export function signToken(payload, days = TTL_DAYS) {
   const body = Buffer.from(JSON.stringify({
     ...payload,

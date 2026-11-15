@@ -26,7 +26,12 @@ function fmtSize(bytes: number) {
 }
 
 export default function Me({ user, children, activeId, onSelectChild, onAddChild, onEditChild, onLogout, onUserChange, onOpenAdmin }: Props) {
-  const [storage, setStorage] = useState<{ usedBytes: number; quotaBytes: number } | null>(null)
+  const [storage, setStorage] = useState<{
+    usedBytes: number
+    quotaBytes: number
+    freeBytes?: number | null
+    totalBytes?: number | null
+  } | null>(null)
   const [copied, setCopied] = useState(false)
   const [sheet, setSheet] = useState<'profile' | 'password' | 'family' | null>(null)
   const [serverUrl, setServerUrl] = useState('')
@@ -48,7 +53,24 @@ export default function Me({ user, children, activeId, onSelectChild, onAddChild
     } catch {}
   }
 
-  const pct = storage ? Math.min(100, (storage.usedBytes / storage.quotaBytes) * 100) : 0
+  // 进度条：有磁盘总量时按磁盘使用率显示，否则按媒体占用/上限
+  const pct = (() => {
+    if (!storage) return 0
+    if (storage.totalBytes && storage.freeBytes != null) {
+      return Math.min(100, Math.max(0, (1 - storage.freeBytes / storage.totalBytes) * 100))
+    }
+    if (!storage.quotaBytes) return 0
+    return Math.min(100, (storage.usedBytes / storage.quotaBytes) * 100)
+  })()
+
+  // 文案：区分「照片/视频占用」与「服务器磁盘空间」两件事
+  const mediaText = storage ? fmtSize(storage.usedBytes) : '—'
+  const diskText = (() => {
+    if (!storage || storage.freeBytes == null) return ''
+    const total = storage.totalBytes || 0
+    const usedPctNum = total ? (1 - storage.freeBytes / total) * 100 : 0
+    return `服务器磁盘已用 ${usedPctNum.toFixed(0)}% · 剩余 ${fmtSize(storage.freeBytes)}`
+  })()
 
   const rowCls = 'w-full flex items-center gap-3 px-4 py-3.5 active:bg-slate-50 transition'
 
@@ -152,14 +174,17 @@ export default function Me({ user, children, activeId, onSelectChild, onAddChild
       <div className="bg-white rounded-2xl shadow-soft p-4">
         <div className="flex items-center gap-2 mb-3">
           <HardDrive className="w-4 h-4 text-slate-400" strokeWidth={1.8} />
-          <span className="text-sm text-brand-800">存储占用</span>
+          <span className="text-sm text-brand-800">照片与视频占用</span>
           <span className="ml-auto text-[11px] text-slate-400">
-            {storage ? `${fmtSize(storage.usedBytes)} / ${fmtSize(storage.quotaBytes)}` : '—'}
+            {mediaText}
           </span>
         </div>
         <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
           <div className="h-full bg-brand-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
         </div>
+        {diskText && (
+          <p className="mt-2 text-[11px] text-slate-400">{diskText}</p>
+        )}
       </div>
 
       {native && (
