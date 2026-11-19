@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'mobile/**'
-      - 'web/**'
-      - '.github/workflows/android.yml'
     tags:
       - 'android-v*'
 
