@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/yysdaddy/kidslog/actions/workflows/ci.yml/badge.svg)
 
-**当前版本**：服务端 / Web `0.6.11` · Android `1.3.0` · [下载安卓 APK](./apk/kidslog-1.3.0.apk) · [更新记录](CHANGELOG.md)
+**当前版本**：服务端 / Web `0.6.11` · Android `1.3.0` · [下载安卓 APK](https://github.com/yysdaddy/kidslog/releases/latest) · [更新记录](CHANGELOG.md)
 
 自托管的家庭育儿记录系统。给家里的小宝宝记喂养、睡眠、身高体重、就医用药和日常出行，
 照片视频一起留档，多设备多家人共用同一份账本。
@@ -34,7 +34,7 @@
 - 媒体附件：记录内可上传图片/视频，服务端统一转码为 JPEG 与 720p MP4，随记录详情预览
 - 统计：喂养/睡眠频次、生长发育曲线、健康概览
 - 疫苗计划参考（按月龄提示）
-- 管理员后台：成员管理、重置密码、账号停用、存储配额与自动清理
+- 管理员后台：成员管理、重置密码、账号停用、存储占用展示
 - PWA 可安装到手机桌面
 - Android App（Capacitor 打包，可自填服务器地址，见[安卓 App](#安卓-appandroid)）
 
@@ -55,7 +55,7 @@
 ├─ Dockerfile             # 多阶段：前端构建 → 运行时（含 ffmpeg）
 ├─ .env.example           # 环境变量模板
 ├─ CHANGELOG.md           # 版本更新记录
-├─ apk/                   # 已构建的安卓安装包
+├─ apk/                   # 本地构建产物（*.apk 已被 .gitignore 排除，不入库）
 ├─ server/
 │  └─ src/
 │     ├─ index.js         # Fastify 入口，静态文件 + API + 鉴权钩子
@@ -133,7 +133,9 @@ NPM_REGISTRY=https://registry.npmjs.org \
 
 ## 安卓 App（Android）
 
-安装包随仓库提供：[`apk/kidslog-1.3.0.apk`](./apk/kidslog-1.3.0.apk)（约 3.1 MB），正式版，版本名不再带 `-test` 后缀。
+安装包发布在 GitHub Releases：[Releases · android-v1.3.0](https://github.com/yysdaddy/kidslog/releases/tag/android-v1.3.0)（`kidslog-1.3.0.apk`，约 3.1 MB，正式签名）。
+
+> 仓库内 `apk/` 目录只存放 `README.md` 与 `SHA256SUMS.txt`；`*.apk` 被 `.gitignore` 排除，不随仓库分发。推送 `android-v*` 标签会由 CI 自动构建并附加到对应 Release。
 
 | 项目 | 值 |
 | --- | --- |
@@ -206,7 +208,7 @@ npm run dev
 | `DATA_DIR` | 否 | `/data` | 数据库、媒体、备份的存放目录 |
 | `PORT` | 否 | `8080` | 服务端口 |
 | `ALLOW_REGISTRATION` | 否 | `true` | 设为 `false` 关闭自助注册（首个管理员不受限，其余走邀请码） |
-| `MEDIA_QUOTA_GB` | 否 | `20` | 媒体存储配额 |
+| `MEDIA_QUOTA_GB` | 否 | `0` | 媒体存储上限（GB）。`0` 表示按磁盘剩余空间动态计算；仅用于存储卡片展示，当前版本不做上传拦截 |
 | `LOG_LEVEL` | 否 | `info` | Fastify 日志级别 |
 | `TRUST_PROXY` | 否 | 开启 | 信任 `X-Forwarded-For` 取真实客户端 IP（登录限流用）；服务直接暴露公网、前面没有反代时设为 `false` |
 | `RATE_LIMIT_LOGIN` | 否 | `10` | 登录接口每 IP 每分钟上限，`0` 关闭 |
@@ -222,7 +224,7 @@ npm run dev
 data/
 ├─ app.db            # SQLite 主库
 ├─ media/<childId>/  # 转码后的图片与视频、缩略图
-└─ backups/          # 自动备份
+└─ backups/          # 预留目录（当前版本未实现自动备份，可忽略）
 ```
 
 备份只需打包整个 `data/` 目录：

@@ -1,7 +1,7 @@
 # 更新记录
 
 版本分两条线：服务端 / Web 走语义化版本（`0.6.x`），Android 走独立版本（`1.3.x`，1.2.x 为带 `-test` 后缀的测试线）。
-镜像标签与服务端版本一致，安卓安装包放在 [`apk/`](apk/)。
+镜像标签与服务端版本一致，安卓安装包发布在 [GitHub Releases](https://github.com/yysdaddy/kidslog/releases)（`apk/` 仅留存校验清单）。
 
 ## 服务端 / Web
 

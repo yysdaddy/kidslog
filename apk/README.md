@@ -1,5 +1,7 @@
 # 安卓安装包
 
+> 本目录的 `*.apk` 已被 `.gitignore` 排除，不随仓库分发。正式包请从 GitHub Releases 下载（tag `android-v*`）。
+
 | 文件 | 版本 | versionCode | 说明 |
 | --- | --- | --- | --- |
 | `kidslog-1.3.0.apk` | 1.3.0 | 8 | 当前正式版，版本名去掉 `-test` 后缀；应用 ID 统一为 `top.yysdaddy.kidslog`，release 签名证书重签（O=yysdaddy） |
